@@ -1,5 +1,6 @@
 /**
  * QuickStore Mini Checkout - Application Logic
+ * Professional, Enterprise-grade E-Commerce Experience
  * Implements single-page checkout, dynamic cart calculations,
  * robust edge-case handling, form validation with state preservation,
  * and deterministic double-submit prevention.
@@ -10,15 +11,37 @@ const PRODUCTS = [
   {
     id: 'prod-1',
     name: 'Wireless Ergonomic Mouse',
+    sku: 'WM-450',
+    category: 'Peripherals',
     price: 45.00,
-    code: 'MOU',
+    svgIcon: `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="7"></rect>
+        <line x1="12" y1="6" x2="12" y2="10"></line>
+      </svg>
+    `,
     description: 'Precision optical sensor, dual Bluetooth and 2.4GHz wireless connectivity.'
   },
   {
     id: 'prod-2',
     name: 'Mechanical Gaming Keyboard',
+    sku: 'MK-750',
+    category: 'Peripherals',
     price: 75.00,
-    code: 'KEY',
+    svgIcon: `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+        <line x1="6" y1="8" x2="6.01" y2="8"></line>
+        <line x1="10" y1="8" x2="10.01" y2="8"></line>
+        <line x1="14" y1="8" x2="14.01" y2="8"></line>
+        <line x1="18" y1="8" x2="18.01" y2="8"></line>
+        <line x1="6" y1="12" x2="6.01" y2="12"></line>
+        <line x1="10" y1="12" x2="10.01" y2="12"></line>
+        <line x1="14" y1="12" x2="14.01" y2="12"></line>
+        <line x1="18" y1="12" x2="18.01" y2="12"></line>
+        <line x1="7" y1="16" x2="17" y2="16"></line>
+      </svg>
+    `,
     description: '75% compact layout with hot-swappable tactile switches and RGB backlighting.'
   }
 ];
@@ -73,26 +96,40 @@ function toCents(dollarAmount) {
   return Math.round(dollarAmount * 100);
 }
 
-// 5. Render Products List
+// 5. Render Products List (Modern Enterprise UI Cards)
 function renderProducts() {
   if (!elements.productsList) return;
   elements.productsList.innerHTML = PRODUCTS.map(product => `
     <div class="product-item" data-testid="product-item-${product.id}">
-      <div class="product-info">
-        <div class="product-icon-box" aria-hidden="true">${product.code}</div>
-        <div>
+      <div class="product-info-wrapper">
+        <div class="product-icon-box" aria-hidden="true">
+          ${product.svgIcon}
+        </div>
+        <div class="product-meta">
+          <div class="product-top-row">
+            <span class="product-sku-tag">${product.sku}</span>
+            <span class="product-stock-tag">In Stock</span>
+          </div>
           <h3 class="product-name" data-testid="product-name-${product.id}">${product.name}</h3>
           <p class="product-desc">${product.description}</p>
-          <div class="product-price" data-testid="product-price-${product.id}">${formatCurrency(product.price)}</div>
+          <div class="product-price-row">
+            <span class="price-label">Price:</span>
+            <span class="product-price" data-testid="product-price-${product.id}">${formatCurrency(product.price)}</span>
+          </div>
         </div>
       </div>
       <button 
         type="button" 
-        class="btn btn-primary btn-sm" 
+        class="btn btn-outline-primary btn-add" 
         data-testid="add-to-cart-${product.id}"
         onclick="addToCart('${product.id}')"
+        aria-label="Add ${product.name} to cart"
       >
-        + Add to Cart
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Add to Cart</span>
       </button>
     </div>
   `).join('');
@@ -122,7 +159,7 @@ function calculateTotals() {
   };
 }
 
-// 7. Render Cart View
+// 7. Render Cart View (Segmented Controls & Tabular Line Totals)
 function renderCart() {
   const { subtotal, total, totalCount } = calculateTotals();
   const activeEntries = Object.entries(state.cart).filter(([_, qty]) => qty > 0);
@@ -159,46 +196,63 @@ function renderCart() {
       <div class="cart-item-row" data-testid="cart-item-${product.id}">
         <div class="cart-item-details">
           <div class="cart-item-title" data-testid="cart-item-name-${product.id}">${product.name}</div>
-          <div class="cart-item-unit-price">${formatCurrency(product.price)} each</div>
+          <div class="cart-item-submeta">
+            <span class="cart-item-unit-price">${formatCurrency(product.price)} each</span>
+            <span class="bullet-separator">&bull;</span>
+            <span class="cart-item-sku">${product.sku}</span>
+          </div>
         </div>
 
-        <div class="cart-item-controls">
-          <button 
-            type="button" 
-            class="qty-btn" 
-            data-testid="cart-qty-dec-${product.id}"
-            aria-label="Decrease quantity"
-            onclick="updateQuantity('${product.id}', -1)"
-          >-</button>
+        <div class="cart-item-actions">
+          <div class="stepper-control">
+            <button 
+              type="button" 
+              class="stepper-btn stepper-btn-dec" 
+              data-testid="cart-qty-dec-${product.id}"
+              aria-label="Decrease quantity"
+              onclick="updateQuantity('${product.id}', -1)"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
 
-          <input 
-            type="number" 
-            min="1" 
-            max="${MAX_QUANTITY_PER_ITEM}"
-            value="${quantity}" 
-            class="qty-input" 
-            data-testid="cart-item-qty-${product.id}"
-            aria-label="Item quantity"
-            onchange="handleDirectQuantityChange('${product.id}', this.value)"
-            onblur="handleDirectQuantityChange('${product.id}', this.value)"
-          >
+            <input 
+              type="number" 
+              min="1" 
+              max="${MAX_QUANTITY_PER_ITEM}"
+              value="${quantity}" 
+              class="stepper-input" 
+              data-testid="cart-item-qty-${product.id}"
+              aria-label="Item quantity"
+              onchange="handleDirectQuantityChange('${product.id}', this.value)"
+              onblur="handleDirectQuantityChange('${product.id}', this.value)"
+            >
 
-          <button 
-            type="button" 
-            class="qty-btn" 
-            data-testid="cart-qty-inc-${product.id}"
-            aria-label="Increase quantity"
-            onclick="updateQuantity('${product.id}', 1)"
-            ${quantity >= MAX_QUANTITY_PER_ITEM ? 'disabled' : ''}
-          >+</button>
+            <button 
+              type="button" 
+              class="stepper-btn stepper-btn-inc" 
+              data-testid="cart-qty-inc-${product.id}"
+              aria-label="Increase quantity"
+              onclick="updateQuantity('${product.id}', 1)"
+              ${quantity >= MAX_QUANTITY_PER_ITEM ? 'disabled' : ''}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
 
           <button 
             type="button" 
             class="btn-remove" 
             data-testid="cart-item-remove-${product.id}"
-            title="Remove item"
+            title="Remove item from cart"
             onclick="removeFromCart('${product.id}')"
-          >Remove</button>
+          >
+            Remove
+          </button>
         </div>
 
         <div class="cart-item-line-total" data-testid="cart-line-total-${product.id}">
@@ -397,8 +451,8 @@ function handlePlaceOrder(e) {
   // Render purchased items list safely
   elements.confItemsList.innerHTML = state.orderConfirmation.purchasedItems.map(item => `
     <div class="conf-item-row">
-      <span>${item.name} × ${item.quantity}</span>
-      <strong>${formatCurrency(item.lineTotal)}</strong>
+      <span class="conf-item-name">${item.name} &times; ${item.quantity}</span>
+      <strong class="conf-item-price">${formatCurrency(item.lineTotal)}</strong>
     </div>
   `).join('');
 

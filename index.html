@@ -12,18 +12,26 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- Header -->
+    <!-- Top Navigation Header -->
     <header class="store-header">
       <div class="header-content">
         <div class="logo">
-          <svg class="header-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="9" cy="21" r="1"></circle>
-            <circle cx="20" cy="21" r="1"></circle>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-          </svg>
-          <span class="logo-text">QuickStore</span>
+          <div class="logo-mark">
+            <svg class="header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+          </div>
+          <div class="logo-text-group">
+            <span class="logo-text">QuickStore</span>
+            <span class="logo-env-tag">Checkout Sandbox</span>
+          </div>
         </div>
-        <div class="header-badge">Mini Checkout Demo</div>
+        <div class="header-status-indicator">
+          <span class="status-dot"></span>
+          <span class="header-status-text">System Active</span>
+        </div>
       </div>
     </header>
 
@@ -33,18 +41,28 @@
       <div id="checkout-view" class="checkout-grid" data-testid="checkout-view">
         <!-- Left Column: Products & Cart -->
         <section class="store-section products-cart-section">
+          <!-- Products Catalog Card -->
           <div class="section-card">
-            <h2 class="section-title">Available Products</h2>
-            <p class="section-subtitle">Select items to add to your cart</p>
+            <div class="card-header-row">
+              <div>
+                <h2 class="section-title">Available Products</h2>
+                <p class="section-subtitle">Select items to configure your cart</p>
+              </div>
+              <span class="catalog-badge">Fixed Pricing</span>
+            </div>
             
             <div class="products-grid" id="products-list" data-testid="products-list">
               <!-- Rendered via JS -->
             </div>
           </div>
 
+          <!-- Shopping Cart Card -->
           <div class="section-card cart-card">
             <div class="cart-header">
-              <h2 class="section-title">Shopping Cart</h2>
+              <div>
+                <h2 class="section-title">Order Summary</h2>
+                <p class="section-subtitle">Review items and calculated totals</p>
+              </div>
               <span id="cart-item-count" class="badge" data-testid="cart-item-count">0 items</span>
             </div>
 
@@ -58,27 +76,40 @@
               <span class="alert-text">Your cart is empty. Please add at least one item to proceed with checkout.</span>
             </div>
 
+            <!-- Empty Cart State -->
             <div id="cart-empty-state" class="empty-cart-message" data-testid="cart-empty-state">
-              <p>Your cart is empty.</p>
-              <span class="subtext">Add a product above to get started.</span>
+              <div class="empty-cart-icon-wrapper" aria-hidden="true">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+              </div>
+              <p class="empty-cart-title">Your cart is empty</p>
+              <span class="subtext">Select an item from the products list above to begin checkout.</span>
             </div>
 
+            <!-- Active Cart Items List -->
             <div id="cart-items-container" class="cart-items-list" data-testid="cart-items-container" style="display: none;">
               <!-- Rendered via JS -->
             </div>
 
-            <!-- Price Breakdown -->
+            <!-- Price Breakdown Calculation -->
             <div id="cart-summary" class="cart-summary" data-testid="cart-summary" style="display: none;">
               <div class="summary-row">
-                <span class="summary-label">Subtotal:</span>
+                <span class="summary-label">Subtotal</span>
                 <span id="cart-subtotal" class="summary-value" data-testid="cart-subtotal">$0.00</span>
               </div>
               <div class="summary-row">
-                <span class="summary-label">Estimated Shipping:</span>
-                <span class="summary-value free-shipping">FREE</span>
+                <span class="summary-label">Estimated Shipping</span>
+                <span class="summary-value free-shipping">Complimentary</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Estimated Sales Tax</span>
+                <span class="summary-value">$0.00</span>
               </div>
               <div class="summary-row total-row">
-                <span class="summary-label">Order Total:</span>
+                <span class="summary-label">Total Due</span>
                 <span id="cart-total" class="summary-value order-total-value" data-testid="cart-total">$0.00</span>
               </div>
             </div>
@@ -88,13 +119,16 @@
         <!-- Right Column: Customer Details & Checkout Form -->
         <section class="store-section checkout-form-section">
           <div class="section-card checkout-card">
-            <h2 class="section-title">Customer Details</h2>
-            <p class="section-subtitle">Enter your information to complete the purchase</p>
+            <div class="checkout-card-header">
+              <span class="step-indicator">Step 2 of 2</span>
+              <h2 class="section-title">Customer Information</h2>
+              <p class="section-subtitle">Enter payment and delivery credentials</p>
+            </div>
 
             <form id="checkout-form" novalidate>
               <div class="form-group">
                 <label for="customer-name" class="form-label">
-                  Full Name <span class="required-star">*</span>
+                  Full Name <span class="required-indicator">(Required)</span>
                 </label>
                 <input 
                   type="text" 
@@ -112,7 +146,9 @@
               </div>
 
               <div class="form-group">
-                <label for="customer-email" class="form-label">Email Address (Optional)</label>
+                <label for="customer-email" class="form-label">
+                  Email Address <span class="optional-indicator">(Optional)</span>
+                </label>
                 <input 
                   type="email" 
                   id="customer-email" 
@@ -129,14 +165,16 @@
               </div>
 
               <div class="form-group">
-                <label for="shipping-address" class="form-label">Shipping Address (Optional)</label>
+                <label for="shipping-address" class="form-label">
+                  Shipping Address <span class="optional-indicator">(Optional)</span>
+                </label>
                 <textarea 
                   id="shipping-address" 
                   name="shippingAddress"
                   class="form-control" 
                   rows="2"
                   maxlength="300"
-                  placeholder="123 Market St, Suite 400"
+                  placeholder="123 Market St, Suite 400, Mumbai, MH"
                   data-testid="shipping-address-input"
                 ></textarea>
               </div>
@@ -144,11 +182,15 @@
               <!-- Order Summary Mini Card -->
               <div class="checkout-review-box">
                 <div class="review-row">
-                  <span>Total Due:</span>
-                  <strong id="form-total-preview" data-testid="form-total-preview">$0.00</strong>
+                  <span class="review-label">Amount Payable:</span>
+                  <strong id="form-total-preview" class="review-amount" data-testid="form-total-preview">$0.00</strong>
                 </div>
-                <div class="security-note">
-                  Sandbox environment: simulated order checkout.
+                <div class="security-badge">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span>Encrypted test transaction &bull; Immediate confirmation</span>
                 </div>
               </div>
 
@@ -156,9 +198,13 @@
               <button 
                 type="submit" 
                 id="place-order-btn" 
-                class="btn btn-primary btn-block"
+                class="btn btn-primary btn-block place-order-btn"
                 data-testid="place-order-btn"
               >
+                <svg class="btn-lock-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
                 <span class="btn-text">Place Order</span>
                 <span class="spinner" style="display: none;" aria-hidden="true"></span>
               </button>
@@ -176,28 +222,32 @@
       >
         <div class="confirmation-card">
           <div class="success-icon-badge" aria-hidden="true">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <h1 class="confirmation-title">Thank you for your order!</h1>
-          <p class="confirmation-subtitle">Your order has been placed successfully and is being prepared.</p>
+          
+          <div class="confirmation-header">
+            <span class="order-status-pill">Order Confirmed</span>
+            <h1 class="confirmation-title">Thank you for your order!</h1>
+            <p class="confirmation-subtitle">Your order has been placed successfully and is being prepared.</p>
+          </div>
 
           <div class="confirmation-details-box">
             <div class="detail-row">
-              <span class="detail-label">Order Reference:</span>
+              <span class="detail-label">Order Reference</span>
               <strong id="conf-order-ref" class="detail-value order-ref" data-testid="order-ref-number">ORD-000000</strong>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Customer Name:</span>
+              <span class="detail-label">Customer Name</span>
               <span id="conf-customer-name" class="detail-value" data-testid="confirmation-customer-name">-</span>
             </div>
             <div class="detail-row" id="conf-email-row" style="display: none;">
-              <span class="detail-label">Email:</span>
+              <span class="detail-label">Email Address</span>
               <span id="conf-customer-email" class="detail-value" data-testid="confirmation-customer-email">-</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Order Date and Time:</span>
+              <span class="detail-label">Order Date & Time</span>
               <span id="conf-order-date" class="detail-value">-</span>
             </div>
           </div>
@@ -208,13 +258,13 @@
               <!-- Rendered via JS -->
             </div>
             <div class="conf-total-row">
-              <span>Total Paid:</span>
+              <span>Total Paid</span>
               <strong id="conf-total-paid" class="conf-grand-total" data-testid="confirmation-total">$0.00</strong>
             </div>
           </div>
 
           <div class="confirmation-actions">
-            <button id="new-order-btn" class="btn btn-secondary" data-testid="new-order-btn">
+            <button id="new-order-btn" class="btn btn-secondary btn-new-order" data-testid="new-order-btn">
               Place Another Order
             </button>
           </div>
@@ -223,7 +273,11 @@
     </main>
 
     <footer class="store-footer">
-      <p>&copy; 2026 QuickStore Mini Checkout. SDET Intern Evaluation.</p>
+      <div class="footer-content">
+        <p>&copy; 2026 QuickStore Mini Checkout. Developed for Fynd SDET Evaluation.</p>
+        <span class="footer-divider">&bull;</span>
+        <span class="footer-meta">Single-Page Architecture &bull; Playwright Test Automation</span>
+      </div>
     </footer>
   </div>
 
