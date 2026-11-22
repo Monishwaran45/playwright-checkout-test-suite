@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickStore - Mini Checkout</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="store-header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">🛒</span>
+          <span class="logo-text">QuickStore</span>
+        </div>
+        <div class="header-badge">Mini Checkout Demo</div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Checkout Active Section -->
+      <div id="checkout-view" class="checkout-grid" data-testid="checkout-view">
+        <!-- Left Column: Products & Cart -->
+        <section class="store-section products-cart-section">
+          <div class="section-card">
+            <h2 class="section-title">Available Products</h2>
+            <p class="section-subtitle">Select items to add to your cart</p>
+            
+            <div class="products-grid" id="products-list" data-testid="products-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="section-card cart-card">
+            <div class="cart-header">
+              <h2 class="section-title">Shopping Cart</h2>
+              <span id="cart-item-count" class="badge" data-testid="cart-item-count">0 items</span>
+            </div>
+
+            <!-- Validation alert for empty cart -->
+            <div id="cart-error" class="alert alert-danger" data-testid="cart-error" role="alert" style="display: none;">
+              <span class="alert-icon">⚠️</span>
+              <span class="alert-text">Your cart is empty. Please add at least one item to proceed with checkout.</span>
+            </div>
+
+            <div id="cart-empty-state" class="empty-cart-message" data-testid="cart-empty-state">
+              <div class="empty-icon">🛍️</div>
+              <p>Your cart is empty.</p>
+              <span class="subtext">Add a product above to get started.</span>
+            </div>
+
+            <div id="cart-items-container" class="cart-items-list" data-testid="cart-items-container" style="display: none;">
+              <!-- Rendered via JS -->
+            </div>
+
+            <!-- Price Breakdown -->
+            <div id="cart-summary" class="cart-summary" data-testid="cart-summary" style="display: none;">
+              <div class="summary-row">
+                <span class="summary-label">Subtotal:</span>
+                <span id="cart-subtotal" class="summary-value" data-testid="cart-subtotal">$0.00</span>
+              </div>
+              <div class="summary-row">
+                <span class="summary-label">Estimated Shipping:</span>
+                <span class="summary-value free-shipping">FREE</span>
+              </div>
+              <div class="summary-row total-row">
+                <span class="summary-label">Order Total:</span>
+                <span id="cart-total" class="summary-value order-total-value" data-testid="cart-total">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Customer Details & Checkout Form -->
+        <section class="store-section checkout-form-section">
+          <div class="section-card checkout-card">
+            <h2 class="section-title">Customer Details</h2>
+            <p class="section-subtitle">Enter your information to complete the purchase</p>
+
+            <form id="checkout-form" novalidate>
+              <div class="form-group">
+                <label for="customer-name" class="form-label">
+                  Full Name <span class="required-star">*</span>
+                </label>
+                <input 
+                  type="text" 
+                  id="customer-name" 
+                  name="customerName"
+                  class="form-control" 
+                  placeholder="e.g. Jane Doe"
+                  data-testid="customer-name-input"
+                  autocomplete="name"
+                >
+                <div id="name-error" class="form-error" data-testid="name-error" style="display: none;">
+                  Full Name is required to place your order.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="customer-email" class="form-label">Email Address (Optional)</label>
+                <input 
+                  type="email" 
+                  id="customer-email" 
+                  name="customerEmail"
+                  class="form-control" 
+                  placeholder="e.g. jane.doe@example.com"
+                  data-testid="customer-email-input"
+                  autocomplete="email"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="shipping-address" class="form-label">Shipping Address (Optional)</label>
+                <textarea 
+                  id="shipping-address" 
+                  name="shippingAddress"
+                  class="form-control" 
+                  rows="2"
+                  placeholder="123 Market St, Suite 400"
+                  data-testid="shipping-address-input"
+                ></textarea>
+              </div>
+
+              <!-- Order Summary Mini Card -->
+              <div class="checkout-review-box">
+                <div class="review-row">
+                  <span>Total Due:</span>
+                  <strong id="form-total-preview" data-testid="form-total-preview">$0.00</strong>
+                </div>
+                <div class="security-note">
+                  🔒 Test sandbox transaction - no actual charge applied.
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button 
+                type="submit" 
+                id="place-order-btn" 
+                class="btn btn-primary btn-block"
+                data-testid="place-order-btn"
+              >
+                <span class="btn-text">Place Order</span>
+                <span class="spinner" style="display: none;" aria-hidden="true"></span>
+              </button>
+            </form>
+          </div>
+        </section>
+      </div>
+
+      <!-- Success Confirmation View -->
+      <section 
+        id="order-confirmation" 
+        class="confirmation-view" 
+        data-testid="order-confirmation" 
+        style="display: none;"
+      >
+        <div class="confirmation-card">
+          <div class="success-icon-badge">✓</div>
+          <h1 class="confirmation-title">Thank you for your order!</h1>
+          <p class="confirmation-subtitle">Your order has been placed successfully and is being prepared.</p>
+
+          <div class="confirmation-details-box">
+            <div class="detail-row">
+              <span class="detail-label">Order Reference:</span>
+              <strong id="conf-order-ref" class="detail-value order-ref" data-testid="order-ref-number">ORD-000000</strong>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Customer Name:</span>
+              <span id="conf-customer-name" class="detail-value" data-testid="confirmation-customer-name">-</span>
+            </div>
+            <div class="detail-row" id="conf-email-row" style="display: none;">
+              <span class="detail-label">Email:</span>
+              <span id="conf-customer-email" class="detail-value" data-testid="confirmation-customer-email">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Order Date & Time:</span>
+              <span id="conf-order-date" class="detail-value">-</span>
+            </div>
+          </div>
+
+          <div class="confirmation-items-summary">
+            <h3 class="items-heading">Purchased Items</h3>
+            <div id="conf-items-list" class="conf-items-list" data-testid="confirmation-items-list">
+              <!-- Rendered via JS -->
+            </div>
+            <div class="conf-total-row">
+              <span>Total Paid:</span>
+              <strong id="conf-total-paid" class="conf-grand-total" data-testid="confirmation-total">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="confirmation-actions">
+            <button id="new-order-btn" class="btn btn-secondary" data-testid="new-order-btn">
+              ← Place Another Order
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="store-footer">
+      <p>© 2026 QuickStore Mini Checkout. Built for Fynd SDET Intern Evaluation.</p>
+    </footer>
+  </div>
+
+  <script src="./src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "quickstore-mini-checkout",
+  "version": "1.0.0",
+  "description": "Mini Checkout single-page application and automated browser test suite for Fynd Hiring Hackathon (SDET Intern Track)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "keywords": [
+    "checkout",
+    "sdet",
+    "playwright",
+    "e2e-testing",
+    "hackathon"
+  ],
+  "author": "SDET Intern Candidate",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}
