@@ -336,16 +336,14 @@ function removeFromCart(productId) {
   renderCart();
 }
 
-// 9. Input Sanitization & Validation (Covers edge cases: whitespace, format, boundaries)
+// 9. Input Sanitization & Validation (Only Full Name is mandatory per hackathon brief)
 function validate() {
   let isValid = true;
   const { totalCount } = calculateTotals();
   const rawName = elements.customerNameInput.value;
-  const trimmedName = rawName.trim();
-  const rawEmail = elements.customerEmailInput.value.trim();
-  const rawAddress = elements.shippingAddressInput.value.trim();
+  const name = rawName.trim();
 
-  // Rule 1: Cart must not be empty
+  // 1. Cart validation: Cart must not be empty
   if (totalCount === 0) {
     elements.cartError.style.display = 'flex';
     isValid = false;
@@ -353,13 +351,13 @@ function validate() {
     elements.cartError.style.display = 'none';
   }
 
-  // Rule 2: Customer Name is required (cannot be blank/whitespace-only, min 2 chars)
-  if (!trimmedName) {
+  // 2. Only Full Name is required
+  if (!name) {
     elements.nameError.textContent = 'Full Name is required to place your order.';
     elements.nameError.style.display = 'block';
     elements.customerNameInput.classList.add('is-invalid');
     isValid = false;
-  } else if (trimmedName.length < 2) {
+  } else if (name.length < 2) {
     elements.nameError.textContent = 'Full Name must be at least 2 characters long.';
     elements.nameError.style.display = 'block';
     elements.customerNameInput.classList.add('is-invalid');
@@ -369,15 +367,9 @@ function validate() {
     elements.customerNameInput.classList.remove('is-invalid');
   }
 
-  // Rule 3: Customer Email is required (cannot be blank/whitespace-only, must match valid email format)
-  if (!rawEmail) {
-    if (elements.emailError) {
-      elements.emailError.textContent = 'Email Address is required to place your order.';
-      elements.emailError.style.display = 'block';
-    }
-    elements.customerEmailInput.classList.add('is-invalid');
-    isValid = false;
-  } else {
+  // 3. Optional Email Address (validate syntax only if user entered an email)
+  const rawEmail = elements.customerEmailInput.value.trim();
+  if (rawEmail) {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(rawEmail)) {
       if (elements.emailError) {
@@ -387,34 +379,19 @@ function validate() {
       elements.customerEmailInput.classList.add('is-invalid');
       isValid = false;
     } else {
-      if (elements.emailError) {
-        elements.emailError.style.display = 'none';
-      }
+      if (elements.emailError) elements.emailError.style.display = 'none';
       elements.customerEmailInput.classList.remove('is-invalid');
     }
+  } else {
+    if (elements.emailError) elements.emailError.style.display = 'none';
+    elements.customerEmailInput.classList.remove('is-invalid');
   }
 
-  // Rule 4: Shipping Address is required (cannot be blank/whitespace-only, min 5 chars)
-  if (!rawAddress) {
-    if (elements.addressError) {
-      elements.addressError.textContent = 'Shipping Address is required to place your order.';
-      elements.addressError.style.display = 'block';
-    }
-    elements.shippingAddressInput.classList.add('is-invalid');
-    isValid = false;
-  } else if (rawAddress.length < 5) {
-    if (elements.addressError) {
-      elements.addressError.textContent = 'Please enter a complete shipping address (at least 5 characters).';
-      elements.addressError.style.display = 'block';
-    }
-    elements.shippingAddressInput.classList.add('is-invalid');
-    isValid = false;
-  } else {
-    if (elements.addressError) {
-      elements.addressError.style.display = 'none';
-    }
-    elements.shippingAddressInput.classList.remove('is-invalid');
+  // 4. Optional Shipping Address (no mandatory block)
+  if (elements.addressError) {
+    elements.addressError.style.display = 'none';
   }
+  elements.shippingAddressInput.classList.remove('is-invalid');
 
   // CRITICAL: Customer input values are PRESERVED! We NEVER clear input values on validation fail.
   return isValid;
@@ -504,9 +481,11 @@ function handlePlaceOrder(e) {
     elements.confEmailRow.style.display = 'none';
   }
 
-  if (elements.confShippingAddress) {
+  if (state.orderConfirmation.shippingAddress) {
     elements.confShippingAddress.textContent = state.orderConfirmation.shippingAddress;
-    if (elements.confAddressRow) elements.confAddressRow.style.display = 'flex';
+    elements.confAddressRow.style.display = 'flex';
+  } else {
+    elements.confAddressRow.style.display = 'none';
   }
 
   // Render purchased items list safely using DOM elements & textContent (Zero innerHTML vulnerability)

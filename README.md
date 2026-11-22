@@ -16,7 +16,7 @@ This repository contains a lightweight, responsive, single-page checkout applica
 The project fulfills all requirements of the SDET Intern challenge:
 1. **Single-Page Checkout:** Two synthetic products with fixed pricing, dynamic cart manipulation, real-time line/order total calculation, required field validation, and confirmation reference generation.
 2. **Mistake Handling and Edge Cases:** Blocks empty-cart submissions, blocks missing required inputs, preserves entered customer data on validation failures, and prevents duplicate order confirmations caused by rapid double-clicking.
-3. **Automated Browser Test Suite:** Three primary requirement checks, five edge/risk checks, and five enterprise security checks built with web-first assertions, clean-state isolation, and zero arbitrary delays.
+3. **Automated Browser Test Suite:** Three primary requirement checks, six edge/risk checks, and five enterprise security checks built with web-first assertions, clean-state isolation, and zero arbitrary delays.
 4. **Comprehensive Test Plan and Results:** Prioritized risk matrix, security hardening verifications, manual test logs, defect observations, and full reproduction steps.
 
 ---
@@ -36,7 +36,7 @@ The project fulfills all requirements of the SDET Intern challenge:
 │   ├── app.js               # Application logic, cart state and double-click protection
 │   └── style.css            # Responsive, accessible modern stylesheet
 └── tests/
-    └── checkout.spec.js     # Playwright automated test suite (16 comprehensive checks)
+    └── checkout.spec.js     # Playwright automated test suite (17 comprehensive checks)
 ```
 
 ---
@@ -108,18 +108,19 @@ Each test begins from a clean browser state (`beforeEach` navigates to `/`) and 
 | Test Name | Key Assertions and Verifications |
 | :--- | :--- |
 | **Check 1: Successful Checkout Produces Confirmation** | Adds items ($45 + $75 = $120), inputs customer name, places order. Asserts confirmation view appears, order reference matches regex `^ORD-\d{8}-[A-Z0-9]+$`, customer name matches, and line items summarize accurately. |
-| **Check 2: Missing Field Blocks Checkout & Preserves Input** | Populates optional email and address, leaves required Name blank. Clicks Place Order. Asserts error message appears, confirmation is NOT displayed, and customer's entered email/address are **preserved** (not wiped). |
+| **Check 2: Missing Required Field Blocks Checkout & Preserves Input** | Leaves required Name blank while entering optional email and address. Clicks Place Order. Asserts error message appears, confirmation is NOT displayed, and customer's entered email/address are **preserved**. Enters name and confirms checkout succeeds. |
 | **Check 3: Quantity Change Updates Exact Totals** | Adds items, uses `+` button, `-` button, and direct text input. Asserts line totals update ($45 × 3 = $135; $75 × 4 = $300) and order total updates accurately. |
 | **Check 4: Empty Cart Blocks Checkout** | Clicks Place Order with an empty cart. Asserts validation banner appears and checkout is prevented while preserving entered name. |
-| **Check 5: Rapid Double-Click Protection** | Fires two rapid concurrent click events at "Place Order". Asserts exactly one order confirmation is created with a single reference ID, and button is disabled during submission. |
+| **Check 5: Double-Click Creates Exactly One Confirmation** | Evaluates two rapid clicks on "Place Order" and attempts secondary submission after completion. Asserts exactly one order confirmation is created with a single unchangeable reference ID. |
+| **Check 5B: Single Required Field Verification** | Validates checkout with ONLY Full Name entered. Asserts checkout succeeds ($45.00) and optional email/address rows are hidden on confirmation. |
 | **Check 6: Journey Reset / Clean State** | Places an order, then clicks "Place Another Order". Asserts cart is cleared to 0 items and customer fields return to clean initial state. |
 | **Edge Case 1: Whitespace & Length Enforcement** | Rejects whitespace-only customer names (`"   "`) and single-character entries (< 2 characters) with clear error messaging. |
 | **Edge Case 2: Quantity Input Sanitization** | Automatically corrects negative numbers, zero, floats, and non-numeric characters to minimum `1`, and caps quantities at maximum `99`. |
-| **Edge Case 3: Email Syntax Validation** | Ensures that if optional email is provided, it must conform to valid email syntax (`user@domain.tld`). |
+| **Edge Case 3: Optional Email Syntax Validation** | Ensures that if optional email is provided, it must conform to valid email syntax (`user@domain.tld`), while empty email allows checkout. |
 | **Edge Case 4: XSS & HTML Injection Resistance** | Verifies script tags (`<script>...`) and HTML entities entered into inputs are rendered safely as literal text without DOM injection. |
 | **Edge Case 5: Float-Free Financial Precision** | Eliminates IEEE 754 floating-point drift across bulk quantity multiplications via cents-based integer math. |
 | **Security Check 1: HTTP Security Response Headers** | Enforces `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and strict `Referrer-Policy`. |
-| **Security Check 2: Path Traversal & Jail Defense** | Blocks attempts to access sensitive system files (`server.js`, `package.json`, `.git`) or escape web root with `../`. |
+| **Security Check 2: Path Traversal & Jail Defense** | Blocks attempts to access sensitive system files (`scripts/server.js`, `package.json`, `.git`) or escape web root with `../`. |
 | **Security Check 3: HTTP Method Restrictions** | Blocks non-GET/HEAD HTTP methods (e.g. POST, PUT) with `405 Method Not Allowed`. |
 | **Security Check 4: Prototype Pollution Resistance** | Verifies that passing `__proto__` or non-catalog product IDs does not pollute prototypes or disrupt cart state. |
 | **Security Check 5: Cryptographic Order References** | Generates unguessable order reference IDs via Web Crypto API (`window.crypto.getRandomValues`). |
@@ -128,7 +129,7 @@ Each test begins from a clean browser state (`beforeEach` navigates to `/`) and 
 
 ## Test Plan and Manual Testing Summary
 
-For the full test plan, risk matrix, and manual test records, see [TEST_PLAN.md](file:///c:/Users/Asus-2025/Downloads/New%20Begin/TEST_PLAN.md).
+For the full test plan, risk matrix, and manual test records, see [TEST_PLAN.md](./TEST_PLAN.md).
 
 ### Summary of Manual Tests:
 - **Empty Cart Manual Check:** Verified empty cart checkout displays warning alert and leaves form inputs untouched. Result: **PASS**.

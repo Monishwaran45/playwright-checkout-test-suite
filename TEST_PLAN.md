@@ -44,10 +44,11 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 | Test ID | Test Scenario | Requirement Reference | Type | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | `TC-01` | Successful checkout produces clear order confirmation with unique reference | Task 3.1 | Automated (Playwright) | [PASS] |
-| `TC-02` | Missing required field blocks checkout, shows validation, preserves entered inputs | Task 3.2 | Automated (Playwright) | [PASS] |
+| `TC-02` | Missing required Full Name blocks checkout, shows validation, preserves entered inputs | Task 3.2 | Automated (Playwright) | [PASS] |
 | `TC-03` | Quantity change (+, -, input) updates line totals and order total accurately | Task 3.3 | Automated (Playwright) | [PASS] |
 | `TC-04` | Empty cart submission is blocked with visible validation warning | Task 2 (Mistake handling) | Automated (Playwright) | [PASS] |
 | `TC-05` | Rapid double-click on Place Order produces exactly one confirmation | Task 2 (Mistake handling) | Automated (Playwright) | [PASS] |
+| `TC-05B` | Single required field verification: checkout succeeds with Name only | Task 1 & 2 (Core brief) | Automated (Playwright) | [PASS] |
 | `TC-06` | Clean reset allows placing another order without lingering state | Task 3.1 (State lifecycle) | Automated (Playwright) | [PASS] |
 | `TC-07` | Whitespace-only ("   ") and single-character customer names are rejected | Edge Case Hardening | Automated (Playwright) | [PASS] |
 | `TC-08` | Direct quantity input sanitization (negative, zero, float, capped at 99) | Edge Case Hardening | Automated (Playwright) | [PASS] |
@@ -64,7 +65,22 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 
 ## 4. Manual Exploratory Testing Session
 
-### Manual Scenario 1: Empty Cart Checkout Attempt
+### 4.1 Manual Test Cases & Execution Records
+
+| Test | Expected Result | Actual Result | Status |
+| :--- | :--- | :--- | :--- |
+| **Empty cart** | Checkout blocked | Validation alert displayed; checkout blocked | **PASS** |
+| **Blank name** | Checkout blocked | Name error displayed; input flagged red; checkout blocked | **PASS** |
+| **Whitespace-only name** | Checkout blocked | Trim validation triggers; error displayed; checkout blocked | **PASS** |
+| **Name only** | Checkout succeeds | Order placed; total $45.00; optional email/address hidden | **PASS** |
+| **Name + optional email** | Checkout succeeds | Order placed; email displayed on confirmation row | **PASS** |
+| **Name + optional address** | Checkout succeeds | Order placed; address displayed on confirmation row | **PASS** |
+| **Rapid double-click** | One confirmation only | Synchronous lock acquired; exactly 1 confirmation created | **PASS** |
+| **Remove all cart items** | Cart becomes empty | Empty state rendered; count shows 0 items; order button blocked | **PASS** |
+
+---
+
+### 4.2 Deep Dive Manual Scenarios
 * **Objective:** Verify that an empty cart cannot be checked out and provides clear guidance.
 * **Preconditions:** Fresh browser page loaded at `http://localhost:3000`.
 * **Execution Steps:**
@@ -126,7 +142,7 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 
 | Evaluation Criterion | Implementation Details | Verified By |
 | :--- | :--- | :--- |
-| **Clear Test Cases** | 16 descriptive, self-documenting test cases covering requirements, edge risks, and enterprise security. | `tests/checkout.spec.js` |
+| **Clear Test Cases** | 17 descriptive, self-documenting test cases covering requirements, edge risks, and enterprise security. | `tests/checkout.spec.js` |
 | **Accurate Assertions** | Web-first assertions matching exact prices, currency formatting, regex references, and DOM element presence. | Playwright Test Engine |
 | **Reproducibility** | Standard npm project runnable with `npm test` or `npx playwright test`. Static server built-in. | CI / Local execution |
 | **Plain Interface** | Responsive, semantic HTML5/CSS3/Vanilla JS with zero external framework dependencies or heavy setup. | `index.html`, `src/style.css` |

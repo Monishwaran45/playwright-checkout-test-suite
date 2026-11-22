@@ -75,8 +75,8 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
 
   /**
    * TEST 2 (Prompt Task 3.2):
-   * Verify missing required fields block checkout, show clear validation message,
-   * do not show confirmation, and preserve customer inputs.
+   * Verify missing required field blocks checkout, shows clear validation message,
+   * does not show confirmation, and preserves customer inputs.
    */
   test('Check 2: Missing required field blocks checkout and preserves entered input', async ({ page }) => {
     // 1. Add item to cart so cart is valid
@@ -86,52 +86,27 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     const testEmail = 'test.shopper@example.com';
     const testAddress = '42 Marine Drive, Mumbai, MH';
 
-    // 2. Case A: Missing Full Name (Email & Address filled)
+    // 2. Leave name blank, enter optional email and address
     await page.getByTestId('customer-email-input').fill(testEmail);
     await page.getByTestId('shipping-address-input').fill(testAddress);
     await page.getByTestId('customer-name-input').fill('');
 
+    // 3. Click Place Order
     await page.getByTestId('place-order-btn').click();
 
-    // Assert validation message for missing Name
+    // 4. Assert validation message for missing Name appears
     const nameError = page.getByTestId('name-error');
     await expect(nameError).toBeVisible();
     await expect(nameError).toHaveText('Full Name is required to place your order.');
     await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
 
-    // Assert customer inputs are preserved!
+    // 5. Assert customer inputs are preserved (not cleared)
     await expect(page.getByTestId('customer-email-input')).toHaveValue(testEmail);
     await expect(page.getByTestId('shipping-address-input')).toHaveValue(testAddress);
 
-    // 3. Fulfill Name
+    // 6. Enter a name and verify checkout succeeds
     await page.getByTestId('customer-name-input').fill('Priya Patel');
     await expect(nameError).not.toBeVisible();
-
-    // 4. Case B: Missing Email (Name & Address filled)
-    await page.getByTestId('customer-email-input').fill('');
-    await page.getByTestId('place-order-btn').click();
-
-    const emailError = page.getByTestId('email-error');
-    await expect(emailError).toBeVisible();
-    await expect(emailError).toHaveText('Email Address is required to place your order.');
-    await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
-
-    // Fulfill Email
-    await page.getByTestId('customer-email-input').fill(testEmail);
-    await expect(emailError).not.toBeVisible();
-
-    // 5. Case C: Missing Shipping Address (Name & Email filled)
-    await page.getByTestId('shipping-address-input').fill('');
-    await page.getByTestId('place-order-btn').click();
-
-    const addressError = page.getByTestId('address-error');
-    await expect(addressError).toBeVisible();
-    await expect(addressError).toHaveText('Shipping Address is required to place your order.');
-    await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
-
-    // 6. Complete all fields and verify checkout succeeds
-    await page.getByTestId('shipping-address-input').fill(testAddress);
-    await expect(addressError).not.toBeVisible();
 
     await page.getByTestId('place-order-btn').click();
     await expect(page.getByTestId('order-confirmation')).toBeVisible();
@@ -218,37 +193,64 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
    * TEST 5 (Concurrency & Double-Click Protection):
    * Once an order is placed, clicking "Place Order" twice must not produce two confirmations.
    */
-  test('Double-Click Protection: Rapid double-click produces exactly one confirmation', async ({ page }) => {
-    // 1. Add product and fill required customer fields
+  test('Double-click creates exactly one order confirmation', async ({ page }) => {
+    await page.goto('/');
+
     await page.getByTestId('add-to-cart-prod-1').click();
-    await page.getByTestId('customer-name-input').fill('Rohan Gupta');
-    await page.getByTestId('customer-email-input').fill('rohan.gupta@example.com');
-    await page.getByTestId('shipping-address-input').fill('78 MG Road, Bengaluru, KA');
+    await page.getByTestId('customer-name-input').fill('Test Customer');
 
-    const placeOrderBtn = page.getByTestId('place-order-btn');
+    const button = page.getByTestId('place-order-btn');
 
-    // 2. Dispatch two rapid clicks concurrently (simulating fast double-click or network race)
-    await Promise.all([
-      placeOrderBtn.click(),
-      placeOrderBtn.click({ timeout: 500 }).catch(() => {
-        // May fail or be ignored if button was disabled synchronously
-      })
-    ]);
+    // Trigger two clicks in the same browser task
+    await button.evaluate(element => {
+      element.click();
+      element.click();
+    });
 
-    // 3. Verify exactly one confirmation card is rendered in the DOM
-    const confirmations = page.getByTestId('order-confirmation');
-    await expect(confirmations).toHaveCount(1);
-    await expect(confirmations).toBeVisible();
+    const confirmation = page.getByTestId('order-confirmation');
+    await expect(confirmation).toBeVisible();
 
-    // 4. Verify exactly one order reference element exists
-    const orderRefElements = page.getByTestId('order-ref-number');
-    await expect(orderRefElements).toHaveCount(1);
-    await expect(orderRefElements).toHaveText(/^ORD-\d{8}-[A-Z0-9]+$/);
+    const reference = page.getByTestId('order-ref-number');
+    await expect(reference).toBeVisible();
 
-    // 5. Verify customer details match
-    await expect(page.getByTestId('confirmation-customer-name')).toHaveText('Rohan Gupta');
-    await expect(page.getByTestId('confirmation-customer-email')).toHaveText('rohan.gupta@example.com');
-    await expect(page.getByTestId('confirmation-shipping-address')).toHaveText('78 MG Road, Bengaluru, KA');
+    const firstReference = await reference.textContent();
+
+    // Try submitting again after the order is complete
+    await button.evaluate(element => element.click());
+
+    await expect(confirmation).toBeVisible();
+    await expect(page.getByTestId('order-ref-number'))
+      .toHaveText(firstReference);
+
+    await expect(reference).toHaveCount(1);
+  });
+
+  /**
+   * TEST 5B (Single Required Field Verification):
+   * Verifies that checkout succeeds with only Full Name populated (email & address omitted).
+   */
+  test('Only customer name is required for checkout', async ({ page }) => {
+    await page.goto('/');
+
+    await page.getByTestId('add-to-cart-prod-1').click();
+    await page.getByTestId('customer-name-input').fill('Test Customer');
+
+    // Leave email and address empty
+    await page.getByTestId('place-order-btn').click();
+
+    await expect(page.getByTestId('order-confirmation')).toBeVisible();
+
+    await expect(page.getByTestId('confirmation-customer-name'))
+      .toHaveText('Test Customer');
+
+    await expect(page.getByTestId('confirmation-total'))
+      .toHaveText('$45.00');
+
+    await expect(page.getByTestId('confirmation-customer-email'))
+      .not.toBeVisible();
+
+    await expect(page.getByTestId('confirmation-shipping-address'))
+      .not.toBeVisible();
   });
 
   /**
@@ -350,10 +352,10 @@ test.describe('Mini Checkout - Edge Cases & Robustness Verification', () => {
   });
 
   /**
-   * EDGE CASE 3: Required email validation & format checking
-   * Empty email or syntactically invalid email must block checkout with clear error.
+   * EDGE CASE 3: Optional email syntax validation
+   * If customer provides an email, it must conform to valid format.
    */
-  test('Edge Case 3: Validates required email presence and syntax', async ({ page }) => {
+  test('Edge Case 3: Validates optional email syntax when provided', async ({ page }) => {
     await page.getByTestId('add-to-cart-prod-1').click();
     await page.getByTestId('customer-name-input').fill('Sarah Connor');
     await page.getByTestId('shipping-address-input').fill('Cyberdyne Systems Facility');
@@ -361,21 +363,14 @@ test.describe('Mini Checkout - Edge Cases & Robustness Verification', () => {
     const emailInput = page.getByTestId('customer-email-input');
     const emailError = page.getByTestId('email-error');
 
-    // Case A: Empty email
-    await emailInput.fill('');
-    await page.getByTestId('place-order-btn').click();
-    await expect(emailError).toBeVisible();
-    await expect(emailError).toHaveText('Email Address is required to place your order.');
-    await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
-
-    // Case B: Invalid email syntax missing '@' and domain
+    // Case A: Invalid email syntax missing '@' and domain
     await emailInput.fill('invalid-email-address');
     await page.getByTestId('place-order-btn').click();
     await expect(emailError).toBeVisible();
     await expect(emailError).toHaveText(/Please enter a valid email address/);
     await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
 
-    // Case C: Fix email to valid syntax -> succeeds
+    // Case B: Fix email to valid syntax -> succeeds
     await emailInput.fill('sarah.connor@cyberdyne.org');
     await expect(emailError).not.toBeVisible();
 

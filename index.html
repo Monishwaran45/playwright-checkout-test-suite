@@ -146,7 +146,7 @@
 
               <div class="form-group">
                 <label for="customer-email" class="form-label">
-                  Email Address <span class="required-star">*</span>
+                  Email Address <span class="optional-tag">(Optional)</span>
                 </label>
                 <input 
                   type="email" 
@@ -159,13 +159,13 @@
                   autocomplete="email"
                 >
                 <div id="email-error" class="form-error" data-testid="email-error" role="alert" aria-live="polite" style="display: none;">
-                  Email Address is required to place your order.
+                  Please enter a valid email address.
                 </div>
               </div>
 
               <div class="form-group">
                 <label for="shipping-address" class="form-label">
-                  Shipping Address <span class="required-star">*</span>
+                  Shipping Address <span class="optional-tag">(Optional)</span>
                 </label>
                 <textarea 
                   id="shipping-address" 
@@ -177,7 +177,7 @@
                   data-testid="shipping-address-input"
                 ></textarea>
                 <div id="address-error" class="form-error" data-testid="address-error" role="alert" aria-live="polite" style="display: none;">
-                  Shipping Address is required to place your order.
+                  Please enter a valid shipping address.
                 </div>
               </div>
 
@@ -248,7 +248,7 @@
               <span class="detail-label">Email Address</span>
               <span id="conf-customer-email" class="detail-value" data-testid="confirmation-customer-email">-</span>
             </div>
-            <div class="detail-row" id="conf-address-row">
+            <div class="detail-row" id="conf-address-row" style="display: none;">
               <span class="detail-label">Shipping Address</span>
               <span id="conf-shipping-address" class="detail-value" data-testid="confirmation-shipping-address">-</span>
             </div>
