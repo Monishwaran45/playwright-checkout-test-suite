@@ -1,0 +1,179 @@
+================================================================================
+PLAYWRIGHT TEST EXECUTION REPORT & RUN LOGS
+QuickStore Mini Checkout - SDET Intern Evaluation
+================================================================================
+
+Date of Execution: 22 November 2026
+Test Framework: Playwright (@playwright/test v1.50.0)
+Browser Engine: Chromium (Desktop Chrome Headless)
+Node.js Runtime: v24.18.1
+Operating System: Windows 11 (win32-x64)
+Application URL: http://localhost:3000 / https://playwright-checkout-test-suite.vercel.app
+Target Repository: https://github.com/Monishwaran45/playwright-checkout-test-suite
+
+--------------------------------------------------------------------------------
+SUMMARY
+--------------------------------------------------------------------------------
+Total Automated Tests: 17
+Passed: 17
+Failed: 0
+Skipped: 0
+Flaky: 0
+Pass Rate: 100.0%
+Total Execution Time: 56.1s
+
+--------------------------------------------------------------------------------
+DETAILED TEST EXECUTION RESULTS
+--------------------------------------------------------------------------------
+
+[TEST 1] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Check 1: Successful checkout produces a clear order confirmation with reference
+  Status: PASSED (10.0s)
+  Assertions:
+    - Cart items rendered: Wireless Mouse ($45.00) + Gaming Keyboard ($75.00)
+    - Calculated total: $120.00
+    - Order confirmation view visible: true
+    - Order reference format: regex /^ORD-\d{8}-[A-Z0-9]+$/ (ORD-20261122-XXXXXX)
+    - Customer Name rendered: 'Aarav Sharma'
+    - Total paid rendered: '$120.00'
+
+[TEST 2] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Check 2: Missing required field blocks checkout and preserves entered input
+  Status: PASSED (4.3s)
+  Assertions:
+    - Empty Full Name with populated optional email/address blocks checkout
+    - Validation banner: 'Full Name is required to place your order.' visible
+    - Confirmation view visible: false
+    - State preservation: Email value retained ('test.shopper@example.com')
+    - State preservation: Address value retained ('42 Marine Drive, Mumbai, MH')
+    - Name entered ('Priya Patel') -> checkout succeeds immediately
+
+[TEST 3] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Check 3: Quantity change updates line totals and exact order total in real-time
+  Status: PASSED (1.7s)
+  Assertions:
+    - Incrementing Mouse to 3 units: line total $135.00
+    - Decrementing Mouse to 2 units: line total $90.00
+    - Adding Keyboard and setting direct input to 4: line total $300.00
+    - Grand total accurately calculates $390.00 without floating point drift
+
+[TEST 4] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Mistake Handling: Block checkout when cart is empty
+  Status: PASSED (1.4s)
+  Assertions:
+    - Clicking Place Order with 0 items blocks submission
+    - Error message: 'Your cart is empty. Please add at least one item to proceed with checkout.' visible
+    - Confirmation view visible: false
+    - Entered customer details preserved in DOM
+
+[TEST 5] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Double-click creates exactly one order confirmation
+  Status: PASSED (1.5s)
+  Assertions:
+    - Rapid consecutive double-click evaluated in browser context
+    - Confirmation count in DOM: exactly 1
+    - Order reference count in DOM: exactly 1
+    - Post-completion secondary submission ignored (idempotent submission lock)
+
+[TEST 6] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Only customer name is required for checkout
+  Status: PASSED (5.3s)
+  Assertions:
+    - Full Name populated ('Test Customer'), optional email and address omitted
+    - Checkout succeeds: order confirmation visible
+    - Total paid: '$45.00'
+    - Optional Email row in confirmation: hidden (not visible)
+    - Optional Address row in confirmation: hidden (not visible)
+
+[TEST 7] Mini Checkout - Customer Journey & Core Requirements
+  Test Name: Journey Reset: Starting a new order resets cart and customer inputs cleanly
+  Status: PASSED (5.1s)
+  Assertions:
+    - Completed order followed by clicking 'Place Another Order'
+    - Cart reset: 0 items displayed
+    - Form inputs cleared: Name, Email, and Address empty
+    - Confirmation view hidden; checkout grid visible
+
+[TEST 8] Mini Checkout - Edge Cases & Robustness Verification
+  Test Name: Edge Case 1: Rejects whitespace-only and single-char customer names
+  Status: PASSED (5.4s)
+  Assertions:
+    - Whitespace input ('   ') rejected with 'Full Name is required to place your order.'
+    - Single character ('A') rejected with 'Full Name must be at least 2 characters long.'
+    - Two-character valid name ('Li') accepted and processed
+
+[TEST 9] Mini Checkout - Edge Cases & Robustness Verification
+  Test Name: Edge Case 2: Sanitizes invalid quantity inputs (negative, zero, float, overflow)
+  Status: PASSED (1.4s)
+  Assertions:
+    - Negative quantity ('-5') auto-corrected to minimum 1
+    - Zero quantity ('0') auto-corrected to minimum 1
+    - Float quantity ('3.7') truncated to integer 3
+    - Overflow quantity ('999') clamped to maximum 99
+
+[TEST 10] Mini Checkout - Edge Cases & Robustness Verification
+  Test Name: Edge Case 3: Validates optional email syntax when provided
+  Status: PASSED (1.3s)
+  Assertions:
+    - Malformed email ('invalid-email-address') rejected with syntax error
+    - Valid email ('sarah.connor@cyberdyne.org') accepted and order placed
+
+[TEST 11] Mini Checkout - Edge Cases & Robustness Verification
+  Test Name: Edge Case 4: XSS script tags and HTML injection rendered safely as literal text
+  Status: PASSED (1.4s)
+  Assertions:
+    - Payload: '<b id="xss-test"><script>window.__xss_vulnerable = true;</script>John Doe</b>'
+    - Rendered safely as literal string via .textContent
+    - Script never executed: window.__xss_vulnerable === false
+    - Injected DOM element count: 0
+
+[TEST 12] Mini Checkout - Edge Cases & Robustness Verification
+  Test Name: Edge Case 5: Exact floating point arithmetic across high quantity line items
+  Status: PASSED (3.1s)
+  Assertions:
+    - 10 Mice @ $45.00 = $450.00
+    - 7 Keyboards @ $75.00 = $525.00
+    - Grand total calculated via integer cents: exactly $975.00 (zero IEEE 754 float drift)
+
+[TEST 13] Mini Checkout - Enterprise Security Hardening & Penetration Defense
+  Test Name: Security Check 1: Enforces defense-in-depth HTTP security headers
+  Status: PASSED (6.7s)
+  Assertions:
+    - X-Content-Type-Options: 'nosniff'
+    - X-Frame-Options: 'DENY'
+    - Referrer-Policy: 'strict-origin-when-cross-origin'
+    - Content-Security-Policy: contains "default-src 'self'" and "frame-ancestors 'none'"
+
+[TEST 14] Mini Checkout - Enterprise Security Hardening & Penetration Defense
+  Test Name: Security Check 2: Prevents directory traversal and blocks sensitive system files
+  Status: PASSED (38ms)
+  Assertions:
+    - GET /scripts/server.js -> 403 Forbidden
+    - GET /package.json -> 403 Forbidden
+    - GET /%2e%2e/%2e%2e/scripts/server.js -> 403 Forbidden
+
+[TEST 15] Mini Checkout - Enterprise Security Hardening & Penetration Defense
+  Test Name: Security Check 3: Restricts non-GET HTTP methods with 405 Method Not Allowed
+  Status: PASSED (9ms)
+  Assertions:
+    - POST / -> 405 Method Not Allowed
+    - Header 'Allow': 'GET, HEAD'
+
+[TEST 16] Mini Checkout - Enterprise Security Hardening & Penetration Defense
+  Test Name: Security Check 4: Resists prototype pollution and non-catalog product injection
+  Status: PASSED (1.9s)
+  Assertions:
+    - Injection of '__proto__' and 'constructor' keys rejected by catalog whitelist
+    - Object.prototype remains clean (unpolluted)
+    - Cart state retains 0 items
+
+[TEST 17] Mini Checkout - Enterprise Security Hardening & Penetration Defense
+  Test Name: Security Check 5: Generates cryptographically unguessable order reference numbers
+  Status: PASSED (2.4s)
+  Assertions:
+    - Reference format: matches regex /^ORD-\d{8}-[0-9A-Z]{6}$/
+    - Generated using window.crypto.getRandomValues()
+
+================================================================================
+END OF REPORT - ALL 17 CHECKS PASSED (100% RELIABILITY)
+================================================================================
