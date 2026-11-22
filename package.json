@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Mini Checkout single-page application and automated browser test suite for Fynd Hiring Hackathon (SDET Intern Track)",
   "scripts": {
-    "build": "echo 'Static assets ready'",
     "start": "node scripts/server.js",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
