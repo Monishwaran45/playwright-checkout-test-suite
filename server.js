@@ -40,6 +40,16 @@ const BLOCKED_NAMES = new Set([
 
 const BLOCKED_PREFIXES = ['.', 'tests', 'node_modules', 'playwright-report', 'test-results'];
 
+// Serverless asset tracing hint for bundlers (e.g. Vercel @vercel/nft)
+try {
+  fs.readFileSync(path.join(__dirname, 'index.html'));
+  fs.readFileSync(path.join(__dirname, 'src', 'style.css'));
+  fs.readFileSync(path.join(__dirname, 'src', 'app.js'));
+  fs.readFileSync(path.join(__dirname, 'favicon.svg'));
+} catch (e) {
+  // Silent fallback
+}
+
 const server = http.createServer((req, res) => {
   // 1. HTTP Method Restriction (Allow only GET and HEAD)
   if (req.method !== 'GET' && req.method !== 'HEAD') {
