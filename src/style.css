@@ -575,10 +575,10 @@ body {
   margin-bottom: 0.35rem;
 }
 
-.required-indicator {
-  font-size: 0.75rem;
-  font-weight: 500;
+.required-star {
   color: var(--danger);
+  font-weight: 700;
+  margin-left: 0.15rem;
 }
 
 .optional-indicator {
