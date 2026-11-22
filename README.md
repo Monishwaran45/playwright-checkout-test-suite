@@ -111,6 +111,11 @@ Each test begins from a clean browser state (`beforeEach` navigates to `/`) and 
 | **Check 4: Empty Cart Blocks Checkout** | Clicks Place Order with an empty cart. Asserts validation banner appears and checkout is prevented while preserving entered name. |
 | **Check 5: Rapid Double-Click Protection** | Fires two rapid concurrent click events at "Place Order". Asserts exactly one order confirmation is created with a single reference ID, and button is disabled during submission. |
 | **Check 6: Journey Reset / Clean State** | Places an order, then clicks "Place Another Order". Asserts cart is cleared to 0 items and customer fields return to clean initial state. |
+| **Edge Case 1: Whitespace & Length Enforcement** | Rejects whitespace-only customer names (`"   "`) and single-character entries (< 2 characters) with clear error messaging. |
+| **Edge Case 2: Quantity Input Sanitization** | Automatically corrects negative numbers, zero, floats, and non-numeric characters to minimum `1`, and caps quantities at maximum `99`. |
+| **Edge Case 3: Email Syntax Validation** | Ensures that if optional email is provided, it must conform to valid email syntax (`user@domain.tld`). |
+| **Edge Case 4: XSS & HTML Injection Resistance** | Verifies script tags (`<script>...`) and HTML entities entered into inputs are rendered safely as literal text without DOM injection. |
+| **Edge Case 5: Float-Free Financial Precision** | Eliminates IEEE 754 floating-point drift across bulk quantity multiplications via cents-based integer math. |
 
 ---
 

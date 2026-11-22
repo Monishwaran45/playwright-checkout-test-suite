@@ -617,6 +617,8 @@ body {
 .detail-value {
   color: #0f172a;
   font-weight: 500;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .order-ref {

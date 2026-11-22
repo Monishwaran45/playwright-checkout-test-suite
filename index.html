@@ -94,10 +94,11 @@
                   name="customerName"
                   class="form-control" 
                   placeholder="e.g. Jane Doe"
+                  maxlength="100"
                   data-testid="customer-name-input"
                   autocomplete="name"
                 >
-                <div id="name-error" class="form-error" data-testid="name-error" style="display: none;">
+                <div id="name-error" class="form-error" data-testid="name-error" role="alert" aria-live="polite" style="display: none;">
                   Full Name is required to place your order.
                 </div>
               </div>
@@ -110,9 +111,13 @@
                   name="customerEmail"
                   class="form-control" 
                   placeholder="e.g. jane.doe@example.com"
+                  maxlength="150"
                   data-testid="customer-email-input"
                   autocomplete="email"
                 >
+                <div id="email-error" class="form-error" data-testid="email-error" role="alert" aria-live="polite" style="display: none;">
+                  Please enter a valid email address (e.g. name@example.com).
+                </div>
               </div>
 
               <div class="form-group">
@@ -122,6 +127,7 @@
                   name="shippingAddress"
                   class="form-control" 
                   rows="2"
+                  maxlength="300"
                   placeholder="123 Market St, Suite 400"
                   data-testid="shipping-address-input"
                 ></textarea>

@@ -1,7 +1,8 @@
 /**
  * QuickStore Mini Checkout - Application Logic
  * Implements single-page checkout, dynamic cart calculations,
- * form validation with state preservation, and double-submit protection.
+ * robust edge-case handling, form validation with state preservation,
+ * and deterministic double-submit prevention.
  */
 
 // 1. Synthetic Products Catalog (Fixed prices as required)
@@ -22,6 +23,10 @@ const PRODUCTS = [
   }
 ];
 
+// Constants & Boundaries for Edge Cases
+const MAX_QUANTITY_PER_ITEM = 99;
+const MIN_QUANTITY_PER_ITEM = 1;
+
 // 2. Application State
 const state = {
   cart: {}, // productId -> quantity (e.g. { 'prod-1': 1 })
@@ -41,6 +46,7 @@ const elements = {
   formTotalPreview: document.getElementById('form-total-preview'),
   cartError: document.getElementById('cart-error'),
   nameError: document.getElementById('name-error'),
+  emailError: document.getElementById('email-error'),
   checkoutForm: document.getElementById('checkout-form'),
   customerNameInput: document.getElementById('customer-name'),
   customerEmailInput: document.getElementById('customer-email'),
@@ -58,9 +64,13 @@ const elements = {
   newOrderBtn: document.getElementById('new-order-btn')
 };
 
-// 4. Formatting Utilities
+// 4. Formatting & Safe Financial Utilities (Cents arithmetic to prevent IEEE 754 float drift)
 function formatCurrency(amount) {
   return `$${amount.toFixed(2)}`;
+}
+
+function toCents(dollarAmount) {
+  return Math.round(dollarAmount * 100);
 }
 
 // 5. Render Products List
@@ -88,24 +98,26 @@ function renderProducts() {
   `).join('');
 }
 
-// 6. Cart Calculations
+// 6. Cart Calculations (Safe from floating-point inaccuracy)
 function calculateTotals() {
-  let subtotal = 0;
+  let subtotalCents = 0;
   let totalCount = 0;
 
   for (const [productId, quantity] of Object.entries(state.cart)) {
     if (quantity > 0) {
       const product = PRODUCTS.find(p => p.id === productId);
       if (product) {
-        subtotal += product.price * quantity;
+        subtotalCents += toCents(product.price) * quantity;
         totalCount += quantity;
       }
     }
   }
 
+  const finalSubtotal = subtotalCents / 100;
+
   return {
-    subtotal: parseFloat(subtotal.toFixed(2)),
-    total: parseFloat(subtotal.toFixed(2)),
+    subtotal: parseFloat(finalSubtotal.toFixed(2)),
+    total: parseFloat(finalSubtotal.toFixed(2)),
     totalCount
   };
 }
@@ -141,7 +153,7 @@ function renderCart() {
   elements.cartItemsContainer.innerHTML = activeEntries.map(([productId, quantity]) => {
     const product = PRODUCTS.find(p => p.id === productId);
     if (!product) return '';
-    const lineTotal = product.price * quantity;
+    const lineTotal = (toCents(product.price) * quantity) / 100;
 
     return `
       <div class="cart-item-row" data-testid="cart-item-${product.id}">
@@ -162,11 +174,13 @@ function renderCart() {
           <input 
             type="number" 
             min="1" 
+            max="${MAX_QUANTITY_PER_ITEM}"
             value="${quantity}" 
             class="qty-input" 
             data-testid="cart-item-qty-${product.id}"
             aria-label="Item quantity"
             onchange="handleDirectQuantityChange('${product.id}', this.value)"
+            onblur="handleDirectQuantityChange('${product.id}', this.value)"
           >
 
           <button 
@@ -175,6 +189,7 @@ function renderCart() {
             data-testid="cart-qty-inc-${product.id}"
             aria-label="Increase quantity"
             onclick="updateQuantity('${product.id}', 1)"
+            ${quantity >= MAX_QUANTITY_PER_ITEM ? 'disabled' : ''}
           >+</button>
 
           <button 
@@ -199,9 +214,13 @@ function renderCart() {
   elements.formTotalPreview.textContent = formatCurrency(total);
 }
 
-// 8. Cart Operations
+// 8. Cart Operations & Boundary Edge Cases
 function addToCart(productId) {
   const currentQty = state.cart[productId] || 0;
+  if (currentQty >= MAX_QUANTITY_PER_ITEM) {
+    alert(`Maximum quantity of ${MAX_QUANTITY_PER_ITEM} units reached for this item.`);
+    return;
+  }
   state.cart[productId] = currentQty + 1;
   renderCart();
 }
@@ -211,20 +230,29 @@ function updateQuantity(productId, delta) {
   const newQty = currentQty + delta;
   if (newQty <= 0) {
     delete state.cart[productId];
+  } else if (newQty > MAX_QUANTITY_PER_ITEM) {
+    state.cart[productId] = MAX_QUANTITY_PER_ITEM;
   } else {
     state.cart[productId] = newQty;
   }
   renderCart();
 }
 
+/**
+ * Handle direct text input in quantity field
+ * Sanitizes: negative numbers, non-numeric strings, floats, zeroes, and overflows (> 99).
+ */
 function handleDirectQuantityChange(productId, val) {
-  const parsed = parseInt(val, 10);
-  if (isNaN(parsed) || parsed <= 0) {
-    // Revert to 1 if invalid number entered
-    state.cart[productId] = 1;
-  } else {
-    state.cart[productId] = parsed;
+  const rawNum = Number(val);
+  let sanitized = Math.floor(rawNum);
+
+  if (isNaN(sanitized) || sanitized < MIN_QUANTITY_PER_ITEM) {
+    sanitized = MIN_QUANTITY_PER_ITEM;
+  } else if (sanitized > MAX_QUANTITY_PER_ITEM) {
+    sanitized = MAX_QUANTITY_PER_ITEM;
   }
+
+  state.cart[productId] = sanitized;
   renderCart();
 }
 
@@ -233,11 +261,13 @@ function removeFromCart(productId) {
   renderCart();
 }
 
-// 9. Validation
+// 9. Input Sanitization & Validation (Covers edge cases: whitespace, format, boundaries)
 function validate() {
   let isValid = true;
   const { totalCount } = calculateTotals();
-  const customerName = elements.customerNameInput.value.trim();
+  const rawName = elements.customerNameInput.value;
+  const trimmedName = rawName.trim();
+  const rawEmail = elements.customerEmailInput.value.trim();
 
   // Rule 1: Cart must not be empty
   if (totalCount === 0) {
@@ -247,8 +277,14 @@ function validate() {
     elements.cartError.style.display = 'none';
   }
 
-  // Rule 2: Customer Name is required (cannot be blank/whitespace)
-  if (!customerName) {
+  // Rule 2: Customer Name is required (cannot be blank/whitespace-only, min 2 chars)
+  if (!trimmedName) {
+    elements.nameError.textContent = 'Full Name is required to place your order.';
+    elements.nameError.style.display = 'block';
+    elements.customerNameInput.classList.add('is-invalid');
+    isValid = false;
+  } else if (trimmedName.length < 2) {
+    elements.nameError.textContent = 'Full Name must be at least 2 characters long.';
     elements.nameError.style.display = 'block';
     elements.customerNameInput.classList.add('is-invalid');
     isValid = false;
@@ -257,11 +293,33 @@ function validate() {
     elements.customerNameInput.classList.remove('is-invalid');
   }
 
-  // Note: Customer inputs are PRESERVED! We do not clear them.
+  // Rule 3: Optional Email validation (if provided, must match valid email format)
+  if (rawEmail) {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(rawEmail)) {
+      if (elements.emailError) {
+        elements.emailError.style.display = 'block';
+      }
+      elements.customerEmailInput.classList.add('is-invalid');
+      isValid = false;
+    } else {
+      if (elements.emailError) {
+        elements.emailError.style.display = 'none';
+      }
+      elements.customerEmailInput.classList.remove('is-invalid');
+    }
+  } else {
+    if (elements.emailError) {
+      elements.emailError.style.display = 'none';
+    }
+    elements.customerEmailInput.classList.remove('is-invalid');
+  }
+
+  // CRITICAL: Customer input values are PRESERVED! We NEVER clear input values on validation fail.
   return isValid;
 }
 
-// 10. Generate Order Reference
+// 10. Generate Unique Order Reference
 function generateOrderReference() {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -269,14 +327,14 @@ function generateOrderReference() {
   return `ORD-${dateStr}-${randomChars}`;
 }
 
-// 11. Handle Order Placement
+// 11. Handle Order Placement (Thread-safe idempotency guard)
 function handlePlaceOrder(e) {
   if (e) e.preventDefault();
 
-  // Guard: Double-submission protection
-  // If already submitting or already completed, ignore subsequent clicks
-  if (state.isSubmitting) {
-    console.warn('Place Order clicked while already submitting. Request ignored.');
+  // Edge Case: Concurrency & Double-Submit Guard
+  // If already submitting or an order is already completed, ignore subsequent clicks
+  if (state.isSubmitting || state.orderConfirmation !== null) {
+    console.warn('Place Order clicked while already submitting or order already finalized. Action blocked.');
     return;
   }
 
@@ -286,17 +344,17 @@ function handlePlaceOrder(e) {
     return;
   }
 
-  // Acquire submission lock
+  // Acquire submission lock synchronously
   state.isSubmitting = true;
 
-  // Immediate UI feedback & disable button to prevent repeated clicks
+  // Immediate UI feedback & disable button
   elements.placeOrderBtn.disabled = true;
   const btnText = elements.placeOrderBtn.querySelector('.btn-text');
   const spinner = elements.placeOrderBtn.querySelector('.spinner');
   if (btnText) btnText.textContent = 'Processing Order...';
   if (spinner) spinner.style.display = 'inline-block';
 
-  // Snapshot details for confirmation
+  // Snapshot details for confirmation (Trimming values to prevent whitespace artifacts)
   const orderRef = generateOrderReference();
   const customerName = elements.customerNameInput.value.trim();
   const customerEmail = elements.customerEmailInput.value.trim();
@@ -310,7 +368,7 @@ function handlePlaceOrder(e) {
         name: prod.name,
         price: prod.price,
         quantity,
-        lineTotal: prod.price * quantity
+        lineTotal: (toCents(prod.price) * quantity) / 100
       };
     });
 
@@ -323,7 +381,7 @@ function handlePlaceOrder(e) {
     date: new Date().toLocaleString()
   };
 
-  // Render Confirmation View
+  // Render Confirmation View securely using textContent (Guards against XSS / HTML injection)
   elements.confOrderRef.textContent = state.orderConfirmation.orderRef;
   elements.confCustomerName.textContent = state.orderConfirmation.customerName;
   elements.confOrderDate.textContent = state.orderConfirmation.date;
@@ -336,6 +394,7 @@ function handlePlaceOrder(e) {
     elements.confEmailRow.style.display = 'none';
   }
 
+  // Render purchased items list safely
   elements.confItemsList.innerHTML = state.orderConfirmation.purchasedItems.map(item => `
     <div class="conf-item-row">
       <span>${item.name} × ${item.quantity}</span>
@@ -368,6 +427,10 @@ function resetForNewOrder() {
   elements.shippingAddressInput.value = '';
   elements.nameError.style.display = 'none';
   elements.customerNameInput.classList.remove('is-invalid');
+  if (elements.emailError) {
+    elements.emailError.style.display = 'none';
+  }
+  elements.customerEmailInput.classList.remove('is-invalid');
   elements.cartError.style.display = 'none';
 
   // Re-render
@@ -378,7 +441,7 @@ function resetForNewOrder() {
   elements.checkoutView.style.display = 'grid';
 }
 
-// 13. Event Listeners & Initialization
+// 13. Event Listeners & Real-Time Error Dismissal
 function init() {
   renderProducts();
   renderCart();
@@ -388,9 +451,18 @@ function init() {
 
   // Clear name validation on input typing
   elements.customerNameInput.addEventListener('input', () => {
-    if (elements.customerNameInput.value.trim()) {
+    if (elements.customerNameInput.value.trim().length >= 2) {
       elements.nameError.style.display = 'none';
       elements.customerNameInput.classList.remove('is-invalid');
+    }
+  });
+
+  // Clear email validation on input typing if valid or empty
+  elements.customerEmailInput.addEventListener('input', () => {
+    const val = elements.customerEmailInput.value.trim();
+    if (!val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      if (elements.emailError) elements.emailError.style.display = 'none';
+      elements.customerEmailInput.classList.remove('is-invalid');
     }
   });
 

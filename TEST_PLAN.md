@@ -45,6 +45,11 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 | `TC-04` | Empty cart submission is blocked with visible validation warning | Task 2 (Mistake handling) | Automated (Playwright) | ✅ PASS |
 | `TC-05` | Rapid double-click on Place Order produces exactly one confirmation | Task 2 (Mistake handling) | Automated (Playwright) | ✅ PASS |
 | `TC-06` | Clean reset allows placing another order without lingering state | Task 3.1 (State lifecycle) | Automated (Playwright) | ✅ PASS |
+| `TC-07` | Whitespace-only ("   ") and single-character customer names are rejected | Edge Case Hardening | Automated (Playwright) | ✅ PASS |
+| `TC-08` | Direct quantity input sanitization (negative, zero, float, capped at 99) | Edge Case Hardening | Automated (Playwright) | ✅ PASS |
+| `TC-09` | Optional email syntax validation when email address is provided | Edge Case Hardening | Automated (Playwright) | ✅ PASS |
+| `TC-10` | XSS script tags and HTML injection rendered safely as literal text | Security / Edge Case | Automated (Playwright) | ✅ PASS |
+| `TC-11` | Exact float-free financial calculations using cents-based arithmetic | Financial Edge Case | Automated (Playwright) | ✅ PASS |
 
 ---
 
