@@ -1,5 +1,5 @@
-# 📋 Quality Assurance Test Plan: Mini Checkout & Browser Test Suite
-**Track:** SDET Intern — Fynd Hiring Hackathon (Nov 2026)  
+# Quality Assurance Test Plan: Mini Checkout & Browser Test Suite
+**Track:** SDET Intern - Fynd Hiring Hackathon (Nov 2026)  
 **Project:** QuickStore Mini Checkout Single-Page Application  
 **Target Platform:** Modern Web Browsers (Chromium / Desktop Web)  
 **Automation Framework:** Playwright (@playwright/test)  
@@ -39,17 +39,17 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 
 | Test ID | Test Scenario | Requirement Reference | Type | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| `TC-01` | Successful checkout produces clear order confirmation with unique reference | Task 3.1 | Automated (Playwright) | ✅ PASS |
-| `TC-02` | Missing required field blocks checkout, shows validation, preserves entered inputs | Task 3.2 | Automated (Playwright) | ✅ PASS |
-| `TC-03` | Quantity change (+, -, input) updates line totals and order total accurately | Task 3.3 | Automated (Playwright) | ✅ PASS |
-| `TC-04` | Empty cart submission is blocked with visible validation warning | Task 2 (Mistake handling) | Automated (Playwright) | ✅ PASS |
-| `TC-05` | Rapid double-click on Place Order produces exactly one confirmation | Task 2 (Mistake handling) | Automated (Playwright) | ✅ PASS |
-| `TC-06` | Clean reset allows placing another order without lingering state | Task 3.1 (State lifecycle) | Automated (Playwright) | ✅ PASS |
-| `TC-07` | Whitespace-only ("   ") and single-character customer names are rejected | Edge Case Hardening | Automated (Playwright) | ✅ PASS |
-| `TC-08` | Direct quantity input sanitization (negative, zero, float, capped at 99) | Edge Case Hardening | Automated (Playwright) | ✅ PASS |
-| `TC-09` | Optional email syntax validation when email address is provided | Edge Case Hardening | Automated (Playwright) | ✅ PASS |
-| `TC-10` | XSS script tags and HTML injection rendered safely as literal text | Security / Edge Case | Automated (Playwright) | ✅ PASS |
-| `TC-11` | Exact float-free financial calculations using cents-based arithmetic | Financial Edge Case | Automated (Playwright) | ✅ PASS |
+| `TC-01` | Successful checkout produces clear order confirmation with unique reference | Task 3.1 | Automated (Playwright) | [PASS] |
+| `TC-02` | Missing required field blocks checkout, shows validation, preserves entered inputs | Task 3.2 | Automated (Playwright) | [PASS] |
+| `TC-03` | Quantity change (+, -, input) updates line totals and order total accurately | Task 3.3 | Automated (Playwright) | [PASS] |
+| `TC-04` | Empty cart submission is blocked with visible validation warning | Task 2 (Mistake handling) | Automated (Playwright) | [PASS] |
+| `TC-05` | Rapid double-click on Place Order produces exactly one confirmation | Task 2 (Mistake handling) | Automated (Playwright) | [PASS] |
+| `TC-06` | Clean reset allows placing another order without lingering state | Task 3.1 (State lifecycle) | Automated (Playwright) | [PASS] |
+| `TC-07` | Whitespace-only ("   ") and single-character customer names are rejected | Edge Case Hardening | Automated (Playwright) | [PASS] |
+| `TC-08` | Direct quantity input sanitization (negative, zero, float, capped at 99) | Edge Case Hardening | Automated (Playwright) | [PASS] |
+| `TC-09` | Optional email syntax validation when email address is provided | Edge Case Hardening | Automated (Playwright) | [PASS] |
+| `TC-10` | XSS script tags and HTML injection rendered safely as literal text | Security / Edge Case | Automated (Playwright) | [PASS] |
+| `TC-11` | Exact float-free financial calculations using cents-based arithmetic | Financial Edge Case | Automated (Playwright) | [PASS] |
 
 ---
 
@@ -73,7 +73,7 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
   - Button remained active for user correction.
   - Entered customer details (`Jane Doe`, `jane.doe@example.com`) remained intact.
   - Confirmation view was NOT displayed.
-* **Verdict:** ✅ **PASS** (Zero defects observed)
+* **Verdict:** [PASS] (Zero defects observed)
 
 ---
 
@@ -94,12 +94,12 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
   - The button disabled and transitioned to "Processing Order...".
   - Exactly one confirmation card appeared with order ID `ORD-YYYYMMDD-XXXXX`.
   - Console showed graceful handling; no unhandled promise rejections or duplicate views.
-* **Verdict:** ✅ **PASS** (Zero defects observed)
+* **Verdict:** [PASS] (Zero defects observed)
 
 ---
 
 ## 5. Defect & Quality Observations Log
-*In accordance with hackathon instructions: "Report real defects if found; don’t invent one to satisfy the brief."*
+*In accordance with hackathon instructions: "Report real defects if found; don't invent one to satisfy the brief."*
 
 ### Observation 1: Whitespace Input in Required Name Field (Fixed during dev)
 * **Description:** Entering only spaces (`"   "`) initially passed naive truthy check `if (!name)`.
@@ -117,7 +117,7 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 
 | Evaluation Criterion | Implementation Details | Verified By |
 | :--- | :--- | :--- |
-| **Clear Test Cases** | 6 descriptive, self-documenting test cases covering requirements and edge risks. | `tests/checkout.spec.js` |
+| **Clear Test Cases** | 11 descriptive, self-documenting test cases covering requirements and edge risks. | `tests/checkout.spec.js` |
 | **Accurate Assertions** | Web-first assertions matching exact prices, currency formatting, regex references, and DOM element presence. | Playwright Test Engine |
 | **Reproducibility** | Standard npm project runnable with `npm test` or `npx playwright test`. Static server built-in. | CI / Local execution |
 | **Plain Interface** | Responsive, semantic HTML5/CSS3/Vanilla JS with zero external framework dependencies or heavy setup. | `index.html`, `src/style.css` |

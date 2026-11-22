@@ -11,15 +11,15 @@ const PRODUCTS = [
     id: 'prod-1',
     name: 'Wireless Ergonomic Mouse',
     price: 45.00,
-    emoji: '🖱️',
-    description: 'Precision optical sensor, dual Bluetooth & 2.4GHz wireless connectivity.'
+    code: 'MOU',
+    description: 'Precision optical sensor, dual Bluetooth and 2.4GHz wireless connectivity.'
   },
   {
     id: 'prod-2',
     name: 'Mechanical Gaming Keyboard',
     price: 75.00,
-    emoji: '⌨️',
-    description: '75% compact layout with hot-swappable tactile switches & RGB backlighting.'
+    code: 'KEY',
+    description: '75% compact layout with hot-swappable tactile switches and RGB backlighting.'
   }
 ];
 
@@ -79,7 +79,7 @@ function renderProducts() {
   elements.productsList.innerHTML = PRODUCTS.map(product => `
     <div class="product-item" data-testid="product-item-${product.id}">
       <div class="product-info">
-        <div class="product-emoji" aria-hidden="true">${product.emoji}</div>
+        <div class="product-icon-box" aria-hidden="true">${product.code}</div>
         <div>
           <h3 class="product-name" data-testid="product-name-${product.id}">${product.name}</h3>
           <p class="product-desc">${product.description}</p>
