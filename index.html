@@ -166,7 +166,7 @@
 
               <div class="form-group">
                 <label for="shipping-address" class="form-label">
-                  Shipping Address <span class="optional-indicator">(Optional)</span>
+                  Shipping Address <span class="required-star">*</span>
                 </label>
                 <textarea 
                   id="shipping-address" 
@@ -177,6 +177,9 @@
                   placeholder="123 Market St, Suite 400, Mumbai, MH"
                   data-testid="shipping-address-input"
                 ></textarea>
+                <div id="address-error" class="form-error" data-testid="address-error" role="alert" aria-live="polite" style="display: none;">
+                  Shipping Address is required to place your order.
+                </div>
               </div>
 
               <!-- Order Summary Mini Card -->
@@ -245,6 +248,10 @@
             <div class="detail-row" id="conf-email-row" style="display: none;">
               <span class="detail-label">Email Address</span>
               <span id="conf-customer-email" class="detail-value" data-testid="confirmation-customer-email">-</span>
+            </div>
+            <div class="detail-row" id="conf-address-row">
+              <span class="detail-label">Shipping Address</span>
+              <span id="conf-shipping-address" class="detail-value" data-testid="confirmation-shipping-address">-</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Order Date & Time</span>

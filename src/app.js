@@ -70,6 +70,7 @@ const elements = {
   cartError: document.getElementById('cart-error'),
   nameError: document.getElementById('name-error'),
   emailError: document.getElementById('email-error'),
+  addressError: document.getElementById('address-error'),
   checkoutForm: document.getElementById('checkout-form'),
   customerNameInput: document.getElementById('customer-name'),
   customerEmailInput: document.getElementById('customer-email'),
@@ -81,6 +82,8 @@ const elements = {
   confCustomerName: document.getElementById('conf-customer-name'),
   confCustomerEmail: document.getElementById('conf-customer-email'),
   confEmailRow: document.getElementById('conf-email-row'),
+  confShippingAddress: document.getElementById('conf-shipping-address'),
+  confAddressRow: document.getElementById('conf-address-row'),
   confOrderDate: document.getElementById('conf-order-date'),
   confItemsList: document.getElementById('conf-items-list'),
   confTotalPaid: document.getElementById('conf-total-paid'),
@@ -322,6 +325,7 @@ function validate() {
   const rawName = elements.customerNameInput.value;
   const trimmedName = rawName.trim();
   const rawEmail = elements.customerEmailInput.value.trim();
+  const rawAddress = elements.shippingAddressInput.value.trim();
 
   // Rule 1: Cart must not be empty
   if (totalCount === 0) {
@@ -372,6 +376,28 @@ function validate() {
     }
   }
 
+  // Rule 4: Shipping Address is required (cannot be blank/whitespace-only, min 5 chars)
+  if (!rawAddress) {
+    if (elements.addressError) {
+      elements.addressError.textContent = 'Shipping Address is required to place your order.';
+      elements.addressError.style.display = 'block';
+    }
+    elements.shippingAddressInput.classList.add('is-invalid');
+    isValid = false;
+  } else if (rawAddress.length < 5) {
+    if (elements.addressError) {
+      elements.addressError.textContent = 'Please enter a complete shipping address (at least 5 characters).';
+      elements.addressError.style.display = 'block';
+    }
+    elements.shippingAddressInput.classList.add('is-invalid');
+    isValid = false;
+  } else {
+    if (elements.addressError) {
+      elements.addressError.style.display = 'none';
+    }
+    elements.shippingAddressInput.classList.remove('is-invalid');
+  }
+
   // CRITICAL: Customer input values are PRESERVED! We NEVER clear input values on validation fail.
   return isValid;
 }
@@ -415,6 +441,7 @@ function handlePlaceOrder(e) {
   const orderRef = generateOrderReference();
   const customerName = elements.customerNameInput.value.trim();
   const customerEmail = elements.customerEmailInput.value.trim();
+  const shippingAddress = elements.shippingAddressInput.value.trim();
   const { total } = calculateTotals();
   const purchasedItems = Object.entries(state.cart)
     .filter(([_, qty]) => qty > 0)
@@ -433,6 +460,7 @@ function handlePlaceOrder(e) {
     orderRef,
     customerName,
     customerEmail,
+    shippingAddress,
     total,
     purchasedItems,
     date: new Date().toLocaleString()
@@ -449,6 +477,11 @@ function handlePlaceOrder(e) {
     elements.confEmailRow.style.display = 'flex';
   } else {
     elements.confEmailRow.style.display = 'none';
+  }
+
+  if (elements.confShippingAddress) {
+    elements.confShippingAddress.textContent = state.orderConfirmation.shippingAddress;
+    if (elements.confAddressRow) elements.confAddressRow.style.display = 'flex';
   }
 
   // Render purchased items list safely
@@ -488,6 +521,10 @@ function resetForNewOrder() {
     elements.emailError.style.display = 'none';
   }
   elements.customerEmailInput.classList.remove('is-invalid');
+  if (elements.addressError) {
+    elements.addressError.style.display = 'none';
+  }
+  elements.shippingAddressInput.classList.remove('is-invalid');
   elements.cartError.style.display = 'none';
 
   // Re-render
@@ -520,6 +557,14 @@ function init() {
     if (val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
       if (elements.emailError) elements.emailError.style.display = 'none';
       elements.customerEmailInput.classList.remove('is-invalid');
+    }
+  });
+
+  // Clear address validation on input typing if valid
+  elements.shippingAddressInput.addEventListener('input', () => {
+    if (elements.shippingAddressInput.value.trim().length >= 5) {
+      if (elements.addressError) elements.addressError.style.display = 'none';
+      elements.shippingAddressInput.classList.remove('is-invalid');
     }
   });
 

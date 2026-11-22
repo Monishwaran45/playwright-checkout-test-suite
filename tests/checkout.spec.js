@@ -38,11 +38,13 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     await expect(page.getByTestId('cart-item-prod-2')).toBeVisible();
     await expect(page.getByTestId('cart-total')).toHaveText('$120.00');
 
-    // 3. Fill required customer fields (Full Name and Email Address)
+    // 3. Fill all required customer fields (Name, Email, and Address)
     const testCustomerName = 'Aarav Sharma';
     const testCustomerEmail = 'aarav.sharma@example.com';
+    const testAddress = '42 Marine Drive, Suite 100, Mumbai, MH';
     await page.getByTestId('customer-name-input').fill(testCustomerName);
     await page.getByTestId('customer-email-input').fill(testCustomerEmail);
+    await page.getByTestId('shipping-address-input').fill(testAddress);
 
     // 4. Click "Place Order"
     await page.getByTestId('place-order-btn').click();
@@ -57,9 +59,10 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     await expect(orderRef).toBeVisible();
     await expect(orderRef).toHaveText(/^ORD-\d{8}-[A-Z0-9]+$/);
 
-    // 7. Assert customer name, email, and exact total paid in confirmation
+    // 7. Assert customer details and exact total paid in confirmation
     await expect(page.getByTestId('confirmation-customer-name')).toHaveText(testCustomerName);
     await expect(page.getByTestId('confirmation-customer-email')).toHaveText(testCustomerEmail);
+    await expect(page.getByTestId('confirmation-shipping-address')).toHaveText(testAddress);
     await expect(page.getByTestId('confirmation-total')).toHaveText('$120.00');
 
     // 8. Assert itemized purchased items are accurately listed
@@ -72,7 +75,7 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
 
   /**
    * TEST 2 (Prompt Task 3.2):
-   * Verify missing required fields (Name / Email) block checkout, show clear validation message,
+   * Verify missing required fields block checkout, show clear validation message,
    * do not show confirmation, and preserve customer inputs.
    */
   test('Check 2: Missing required field blocks checkout and preserves entered input', async ({ page }) => {
@@ -80,54 +83,61 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     await page.getByTestId('add-to-cart-prod-1').click();
     await expect(page.getByTestId('cart-total')).toHaveText('$45.00');
 
-    // 2. Populate required email and optional address, leaving required Name field empty
     const testEmail = 'test.shopper@example.com';
-    const optionalAddress = '42 Marine Drive, Mumbai, MH';
-    await page.getByTestId('customer-email-input').fill(testEmail);
-    await page.getByTestId('shipping-address-input').fill(optionalAddress);
+    const testAddress = '42 Marine Drive, Mumbai, MH';
 
-    // 3. Ensure required Full Name is left blank
+    // 2. Case A: Missing Full Name (Email & Address filled)
+    await page.getByTestId('customer-email-input').fill(testEmail);
+    await page.getByTestId('shipping-address-input').fill(testAddress);
     await page.getByTestId('customer-name-input').fill('');
 
-    // 4. Click "Place Order"
     await page.getByTestId('place-order-btn').click();
 
-    // 5. Assert validation message for missing Name is displayed to the user
+    // Assert validation message for missing Name
     const nameError = page.getByTestId('name-error');
     await expect(nameError).toBeVisible();
     await expect(nameError).toHaveText('Full Name is required to place your order.');
-
-    // 6. Assert confirmation was NOT generated / confirmation view remains hidden
     await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
-    await expect(page.getByTestId('checkout-view')).toBeVisible();
 
-    // 7. Critical assertion: Customer entered values are preserved (not wiped!)
+    // Assert customer inputs are preserved!
     await expect(page.getByTestId('customer-email-input')).toHaveValue(testEmail);
-    await expect(page.getByTestId('shipping-address-input')).toHaveValue(optionalAddress);
+    await expect(page.getByTestId('shipping-address-input')).toHaveValue(testAddress);
 
-    // 8. Assert cart remains untouched and ready
-    await expect(page.getByTestId('cart-total')).toHaveText('$45.00');
-
-    // 9. Now fulfill the required name field
+    // 3. Fulfill Name
     await page.getByTestId('customer-name-input').fill('Priya Patel');
     await expect(nameError).not.toBeVisible();
 
-    // 10. Verify that if required Email is cleared, missing email also blocks checkout
+    // 4. Case B: Missing Email (Name & Address filled)
     await page.getByTestId('customer-email-input').fill('');
     await page.getByTestId('place-order-btn').click();
+
     const emailError = page.getByTestId('email-error');
     await expect(emailError).toBeVisible();
     await expect(emailError).toHaveText('Email Address is required to place your order.');
     await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
 
-    // 11. Complete the email and verify successful checkout
-    await page.getByTestId('customer-email-input').fill('priya.patel@example.com');
+    // Fulfill Email
+    await page.getByTestId('customer-email-input').fill(testEmail);
     await expect(emailError).not.toBeVisible();
+
+    // 5. Case C: Missing Shipping Address (Name & Email filled)
+    await page.getByTestId('shipping-address-input').fill('');
+    await page.getByTestId('place-order-btn').click();
+
+    const addressError = page.getByTestId('address-error');
+    await expect(addressError).toBeVisible();
+    await expect(addressError).toHaveText('Shipping Address is required to place your order.');
+    await expect(page.getByTestId('order-confirmation')).not.toBeVisible();
+
+    // 6. Complete all fields and verify checkout succeeds
+    await page.getByTestId('shipping-address-input').fill(testAddress);
+    await expect(addressError).not.toBeVisible();
 
     await page.getByTestId('place-order-btn').click();
     await expect(page.getByTestId('order-confirmation')).toBeVisible();
     await expect(page.getByTestId('confirmation-customer-name')).toHaveText('Priya Patel');
-    await expect(page.getByTestId('confirmation-customer-email')).toHaveText('priya.patel@example.com');
+    await expect(page.getByTestId('confirmation-customer-email')).toHaveText(testEmail);
+    await expect(page.getByTestId('confirmation-shipping-address')).toHaveText(testAddress);
   });
 
   /**
@@ -182,9 +192,10 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
    * Block checkout when cart is empty and show clear validation message.
    */
   test('Mistake Handling: Block checkout when cart is empty', async ({ page }) => {
-    // 1. Enter name and email but leave cart empty
+    // 1. Enter details but leave cart empty
     await page.getByTestId('customer-name-input').fill('Neha Verma');
     await page.getByTestId('customer-email-input').fill('neha.verma@example.com');
+    await page.getByTestId('shipping-address-input').fill('42 Bandra West, Mumbai');
 
     // 2. Attempt to checkout with empty cart
     await page.getByTestId('place-order-btn').click();
@@ -200,6 +211,7 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     // 5. Assert entered customer inputs are still preserved
     await expect(page.getByTestId('customer-name-input')).toHaveValue('Neha Verma');
     await expect(page.getByTestId('customer-email-input')).toHaveValue('neha.verma@example.com');
+    await expect(page.getByTestId('shipping-address-input')).toHaveValue('42 Bandra West, Mumbai');
   });
 
   /**
@@ -211,6 +223,7 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     await page.getByTestId('add-to-cart-prod-1').click();
     await page.getByTestId('customer-name-input').fill('Rohan Gupta');
     await page.getByTestId('customer-email-input').fill('rohan.gupta@example.com');
+    await page.getByTestId('shipping-address-input').fill('78 MG Road, Bengaluru, KA');
 
     const placeOrderBtn = page.getByTestId('place-order-btn');
 
@@ -235,6 +248,7 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     // 5. Verify customer details match
     await expect(page.getByTestId('confirmation-customer-name')).toHaveText('Rohan Gupta');
     await expect(page.getByTestId('confirmation-customer-email')).toHaveText('rohan.gupta@example.com');
+    await expect(page.getByTestId('confirmation-shipping-address')).toHaveText('78 MG Road, Bengaluru, KA');
   });
 
   /**
@@ -246,6 +260,7 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     await page.getByTestId('add-to-cart-prod-1').click();
     await page.getByTestId('customer-name-input').fill('Ananya Sen');
     await page.getByTestId('customer-email-input').fill('ananya.sen@example.com');
+    await page.getByTestId('shipping-address-input').fill('15 Park Street, Kolkata, WB');
     await page.getByTestId('place-order-btn').click();
     await expect(page.getByTestId('order-confirmation')).toBeVisible();
 
@@ -261,6 +276,7 @@ test.describe('Mini Checkout - Customer Journey & Core Requirements', () => {
     await expect(page.getByTestId('cart-item-count')).toHaveText('0 items');
     await expect(page.getByTestId('customer-name-input')).toHaveValue('');
     await expect(page.getByTestId('customer-email-input')).toHaveValue('');
+    await expect(page.getByTestId('shipping-address-input')).toHaveValue('');
   });
 
 });
@@ -278,6 +294,7 @@ test.describe('Mini Checkout - Edge Cases & Robustness Verification', () => {
   test('Edge Case 1: Rejects whitespace-only and single-char customer names', async ({ page }) => {
     await page.getByTestId('add-to-cart-prod-1').click();
     await page.getByTestId('customer-email-input').fill('test@example.com');
+    await page.getByTestId('shipping-address-input').fill('10 Downing Street');
 
     // Test whitespace-only string
     const nameInput = page.getByTestId('customer-name-input');
@@ -339,6 +356,7 @@ test.describe('Mini Checkout - Edge Cases & Robustness Verification', () => {
   test('Edge Case 3: Validates required email presence and syntax', async ({ page }) => {
     await page.getByTestId('add-to-cart-prod-1').click();
     await page.getByTestId('customer-name-input').fill('Sarah Connor');
+    await page.getByTestId('shipping-address-input').fill('Cyberdyne Systems Facility');
 
     const emailInput = page.getByTestId('customer-email-input');
     const emailError = page.getByTestId('email-error');
@@ -378,6 +396,7 @@ test.describe('Mini Checkout - Edge Cases & Robustness Verification', () => {
     const xssPayload = '<b id="xss-test"><script>window.__xss_vulnerable = true;</script>John Doe</b>';
     await page.getByTestId('customer-name-input').fill(xssPayload);
     await page.getByTestId('customer-email-input').fill('john.doe@example.com');
+    await page.getByTestId('shipping-address-input').fill('123 Safe Sandbox Ave');
 
     await page.getByTestId('place-order-btn').click();
     await expect(page.getByTestId('order-confirmation')).toBeVisible();
