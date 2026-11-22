@@ -347,11 +347,19 @@ function validate() {
     elements.customerNameInput.classList.remove('is-invalid');
   }
 
-  // Rule 3: Optional Email validation (if provided, must match valid email format)
-  if (rawEmail) {
+  // Rule 3: Customer Email is required (cannot be blank/whitespace-only, must match valid email format)
+  if (!rawEmail) {
+    if (elements.emailError) {
+      elements.emailError.textContent = 'Email Address is required to place your order.';
+      elements.emailError.style.display = 'block';
+    }
+    elements.customerEmailInput.classList.add('is-invalid');
+    isValid = false;
+  } else {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(rawEmail)) {
       if (elements.emailError) {
+        elements.emailError.textContent = 'Please enter a valid email address (e.g. name@example.com).';
         elements.emailError.style.display = 'block';
       }
       elements.customerEmailInput.classList.add('is-invalid');
@@ -362,11 +370,6 @@ function validate() {
       }
       elements.customerEmailInput.classList.remove('is-invalid');
     }
-  } else {
-    if (elements.emailError) {
-      elements.emailError.style.display = 'none';
-    }
-    elements.customerEmailInput.classList.remove('is-invalid');
   }
 
   // CRITICAL: Customer input values are PRESERVED! We NEVER clear input values on validation fail.
@@ -511,10 +514,10 @@ function init() {
     }
   });
 
-  // Clear email validation on input typing if valid or empty
+  // Clear email validation on input typing if valid
   elements.customerEmailInput.addEventListener('input', () => {
     const val = elements.customerEmailInput.value.trim();
-    if (!val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+    if (val && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
       if (elements.emailError) elements.emailError.style.display = 'none';
       elements.customerEmailInput.classList.remove('is-invalid');
     }
