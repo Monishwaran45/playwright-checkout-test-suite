@@ -50,9 +50,20 @@ const PRODUCTS = [
 const MAX_QUANTITY_PER_ITEM = 99;
 const MIN_QUANTITY_PER_ITEM = 1;
 
-// 2. Application State
+// Security Helper: Validate that a given product ID is present in our catalog
+function isValidProductId(productId) {
+  return typeof productId === 'string' && PRODUCTS.some(p => p.id === productId);
+}
+
+// Security Helper: Sanitize customer strings by stripping dangerous control characters
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
+// 2. Application State (Prototype-free dictionary to prevent prototype pollution)
 const state = {
-  cart: {}, // productId -> quantity (e.g. { 'prod-1': 1 })
+  cart: Object.create(null), // productId -> quantity (e.g. { 'prod-1': 1 })
   isSubmitting: false,
   orderConfirmation: null
 };
@@ -273,6 +284,10 @@ function renderCart() {
 
 // 8. Cart Operations & Boundary Edge Cases
 function addToCart(productId) {
+  if (!isValidProductId(productId)) {
+    console.warn('Rejected invalid or unverified product ID:', productId);
+    return;
+  }
   const currentQty = state.cart[productId] || 0;
   if (currentQty >= MAX_QUANTITY_PER_ITEM) {
     alert(`Maximum quantity of ${MAX_QUANTITY_PER_ITEM} units reached for this item.`);
@@ -283,6 +298,7 @@ function addToCart(productId) {
 }
 
 function updateQuantity(productId, delta) {
+  if (!isValidProductId(productId)) return;
   const currentQty = state.cart[productId] || 0;
   const newQty = currentQty + delta;
   if (newQty <= 0) {
@@ -300,10 +316,11 @@ function updateQuantity(productId, delta) {
  * Sanitizes: negative numbers, non-numeric strings, floats, zeroes, and overflows (> 99).
  */
 function handleDirectQuantityChange(productId, val) {
+  if (!isValidProductId(productId)) return;
   const rawNum = Number(val);
   let sanitized = Math.floor(rawNum);
 
-  if (isNaN(sanitized) || sanitized < MIN_QUANTITY_PER_ITEM) {
+  if (isNaN(sanitized) || !Number.isFinite(sanitized) || sanitized < MIN_QUANTITY_PER_ITEM) {
     sanitized = MIN_QUANTITY_PER_ITEM;
   } else if (sanitized > MAX_QUANTITY_PER_ITEM) {
     sanitized = MAX_QUANTITY_PER_ITEM;
@@ -314,6 +331,7 @@ function handleDirectQuantityChange(productId, val) {
 }
 
 function removeFromCart(productId) {
+  if (!isValidProductId(productId)) return;
   delete state.cart[productId];
   renderCart();
 }
@@ -402,12 +420,19 @@ function validate() {
   return isValid;
 }
 
-// 10. Generate Unique Order Reference
+// 10. Generate Cryptographically Secure Unique Order Reference
 function generateOrderReference() {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const randomChars = Math.random().toString(36).substring(2, 7).toUpperCase();
-  return `ORD-${dateStr}-${randomChars}`;
+  let randomHex;
+  if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+    const buffer = new Uint8Array(4);
+    window.crypto.getRandomValues(buffer);
+    randomHex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 6);
+  } else {
+    randomHex = Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+  return `ORD-${dateStr}-${randomHex}`;
 }
 
 // 11. Handle Order Placement (Thread-safe idempotency guard)
@@ -484,13 +509,20 @@ function handlePlaceOrder(e) {
     if (elements.confAddressRow) elements.confAddressRow.style.display = 'flex';
   }
 
-  // Render purchased items list safely
-  elements.confItemsList.innerHTML = state.orderConfirmation.purchasedItems.map(item => `
-    <div class="conf-item-row">
-      <span class="conf-item-name">${item.name} &times; ${item.quantity}</span>
-      <strong class="conf-item-price">${formatCurrency(item.lineTotal)}</strong>
-    </div>
-  `).join('');
+  // Render purchased items list safely using DOM elements & textContent (Zero innerHTML vulnerability)
+  elements.confItemsList.replaceChildren(...state.orderConfirmation.purchasedItems.map(item => {
+    const row = document.createElement('div');
+    row.className = 'conf-item-row';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'conf-item-name';
+    nameSpan.textContent = `${item.name} × ${item.quantity}`;
+    const priceStrong = document.createElement('strong');
+    priceStrong.className = 'conf-item-price';
+    priceStrong.textContent = formatCurrency(item.lineTotal);
+    row.appendChild(nameSpan);
+    row.appendChild(priceStrong);
+    return row;
+  }));
 
   // Switch view to confirmation
   elements.checkoutView.style.display = 'none';
@@ -507,7 +539,7 @@ function handlePlaceOrder(e) {
 
 // 12. Reset to New Order (Clean State)
 function resetForNewOrder() {
-  state.cart = {};
+  state.cart = Object.create(null);
   state.isSubmitting = false;
   state.orderConfirmation = null;
 

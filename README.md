@@ -16,8 +16,8 @@ This repository contains a lightweight, responsive, single-page checkout applica
 The project fulfills all requirements of the SDET Intern challenge:
 1. **Single-Page Checkout:** Two synthetic products with fixed pricing, dynamic cart manipulation, real-time line/order total calculation, required field validation, and confirmation reference generation.
 2. **Mistake Handling and Edge Cases:** Blocks empty-cart submissions, blocks missing required inputs, preserves entered customer data on validation failures, and prevents duplicate order confirmations caused by rapid double-clicking.
-3. **Automated Browser Test Suite:** Three primary requirement checks and eight supplementary edge/risk checks built with web-first assertions, clean-state isolation, and zero arbitrary delays.
-4. **Comprehensive Test Plan and Results:** Prioritized risk matrix, manual test logs, defect observations, and full reproduction steps.
+3. **Automated Browser Test Suite:** Three primary requirement checks, five edge/risk checks, and five enterprise security checks built with web-first assertions, clean-state isolation, and zero arbitrary delays.
+4. **Comprehensive Test Plan and Results:** Prioritized risk matrix, security hardening verifications, manual test logs, defect observations, and full reproduction steps.
 
 ---
 
@@ -34,7 +34,7 @@ The project fulfills all requirements of the SDET Intern challenge:
 │   ├── app.js               # Application logic, cart state and double-click protection
 │   └── style.css            # Responsive, accessible modern stylesheet
 └── tests/
-    └── checkout.spec.js     # Playwright automated test suite (11 robust E2E checks)
+    └── checkout.spec.js     # Playwright automated test suite (16 comprehensive checks)
 ```
 
 ---
@@ -116,6 +116,11 @@ Each test begins from a clean browser state (`beforeEach` navigates to `/`) and 
 | **Edge Case 3: Email Syntax Validation** | Ensures that if optional email is provided, it must conform to valid email syntax (`user@domain.tld`). |
 | **Edge Case 4: XSS & HTML Injection Resistance** | Verifies script tags (`<script>...`) and HTML entities entered into inputs are rendered safely as literal text without DOM injection. |
 | **Edge Case 5: Float-Free Financial Precision** | Eliminates IEEE 754 floating-point drift across bulk quantity multiplications via cents-based integer math. |
+| **Security Check 1: HTTP Security Response Headers** | Enforces `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and strict `Referrer-Policy`. |
+| **Security Check 2: Path Traversal & Jail Defense** | Blocks attempts to access sensitive system files (`server.js`, `package.json`, `.git`) or escape web root with `../`. |
+| **Security Check 3: HTTP Method Restrictions** | Blocks non-GET/HEAD HTTP methods (e.g. POST, PUT) with `405 Method Not Allowed`. |
+| **Security Check 4: Prototype Pollution Resistance** | Verifies that passing `__proto__` or non-catalog product IDs does not pollute prototypes or disrupt cart state. |
+| **Security Check 5: Cryptographic Order References** | Generates unguessable order reference IDs via Web Crypto API (`window.crypto.getRandomValues`). |
 
 ---
 

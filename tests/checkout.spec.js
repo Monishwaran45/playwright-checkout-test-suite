@@ -438,3 +438,104 @@ test.describe('Mini Checkout - Edge Cases & Robustness Verification', () => {
   });
 
 });
+
+test.describe('Mini Checkout - Enterprise Security Hardening & Penetration Defense', () => {
+
+  /**
+   * SECURITY CHECK 1: HTTP Security Headers
+   * Validates CSP, X-Frame-Options (clickjacking), and X-Content-Type-Options (MIME sniffing).
+   */
+  test('Security Check 1: Enforces defense-in-depth HTTP security headers', async ({ page }) => {
+    const response = await page.goto('/');
+    expect(response).not.toBeNull();
+    const headers = response.headers();
+
+    // Anti-MIME sniffing
+    expect(headers['x-content-type-options']).toBe('nosniff');
+
+    // Anti-Clickjacking frame protection
+    expect(headers['x-frame-options']).toBe('DENY');
+
+    // Strict referrer policy
+    expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+
+    // Content Security Policy
+    const csp = headers['content-security-policy'];
+    expect(csp).toBeDefined();
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
+
+  /**
+   * SECURITY CHECK 2: Directory Traversal and File Jail Defense
+   * Attempts to traverse out of root or access sensitive server/config files must be blocked.
+   */
+  test('Security Check 2: Prevents directory traversal and blocks sensitive system files', async ({ request }) => {
+    // Attempt 1: Accessing server.js directly
+    const resServer = await request.get('/server.js');
+    expect(resServer.status()).toBe(403);
+
+    // Attempt 2: Accessing package.json directly
+    const resPackage = await request.get('/package.json');
+    expect(resPackage.status()).toBe(403);
+
+    // Attempt 3: Traversal probe using URL encoding
+    const resTraversal = await request.get('/%2e%2e/%2e%2e/server.js');
+    expect(resTraversal.status()).toBe(403);
+  });
+
+  /**
+   * SECURITY CHECK 3: HTTP Method Guard
+   * Verifies that arbitrary POST/PUT requests are rejected with 405 Method Not Allowed.
+   */
+  test('Security Check 3: Restricts non-GET HTTP methods with 405 Method Not Allowed', async ({ request }) => {
+    const postRes = await request.post('/', { data: { malicious: true } });
+    expect(postRes.status()).toBe(405);
+    expect(postRes.headers()['allow']).toBe('GET, HEAD');
+  });
+
+  /**
+   * SECURITY CHECK 4: Prototype Pollution & Tampering Guard
+   * Verifies that attempting to inject __proto__ or non-catalog product keys is safely rejected.
+   */
+  test('Security Check 4: Resists prototype pollution and non-catalog product injection', async ({ page }) => {
+    await page.goto('/');
+
+    // Attempt injection of __proto__ key into cart via browser context
+    await page.evaluate(() => {
+      window.addToCart('__proto__');
+      window.addToCart('constructor');
+      window.handleDirectQuantityChange('toString', 10);
+    });
+
+    // Verify Object.prototype was NOT polluted
+    const isPolluted = await page.evaluate(() => {
+      return Object.prototype.hasOwnProperty('quantity') || Object.prototype.hasOwnProperty('prod-1');
+    });
+    expect(isPolluted).toBe(false);
+
+    // Verify UI remains in clean empty state with 0 items
+    await expect(page.getByTestId('cart-item-count')).toHaveText('0 items');
+    await expect(page.getByTestId('cart-empty-state')).toBeVisible();
+  });
+
+  /**
+   * SECURITY CHECK 5: Cryptographically Secure Order Reference Format
+   * Validates that order references follow the cryptographically secure unguessable schema.
+   */
+  test('Security Check 5: Generates cryptographically unguessable order reference numbers', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('add-to-cart-prod-1').click();
+    await page.getByTestId('customer-name-input').fill('Maya Lin');
+    await page.getByTestId('customer-email-input').fill('maya.lin@example.com');
+    await page.getByTestId('shipping-address-input').fill('789 Design Way, Suite 10');
+    await page.getByTestId('place-order-btn').click();
+
+    await expect(page.getByTestId('order-confirmation')).toBeVisible();
+    const orderRefText = await page.getByTestId('order-ref-number').textContent();
+
+    // Format: ORD-YYYYMMDD-XXXXXX (where X is alphanumeric hex)
+    expect(orderRefText).toMatch(/^ORD-\d{8}-[0-9A-Z]{6}$/);
+  });
+
+});

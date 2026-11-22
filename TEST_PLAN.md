@@ -25,6 +25,10 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 | **RSK-04** | **Input Data Wipe on Validation Error**<br>Validation failure resets form fields, forcing customer to re-type address/email. | Medium | Medium | **P1** | State preservation verification: assert input values remain in DOM after validation fails. |
 | **RSK-05** | **Empty Cart Checkout**<br>Customer clicks "Place Order" with no items in the cart. | Medium | High | **P1** | Cart validation guard blocking checkout and displaying warning alert. |
 | **RSK-06** | **State Bleed Across Sessions**<br>Previous cart state persists into a new order session unexpectedly. | Low | Low | **P2** | Clean state reset verification via "Place Another Order" action. |
+| **RSK-07** | **DOM Cross-Site Scripting (XSS)**<br>Customer or attacker enters malicious script tags or event handlers in input fields. | Critical | Low | **P0** | Elimination of dynamic innerHTML; strict `.textContent` and programmatic DOM rendering. |
+| **RSK-08** | **Directory Traversal / File Disclosure**<br>Attacker sends requests with `../` or encoded characters to read server files. | Critical | Low | **P0** | Strict path resolution jail, prefix blocking, and MIME whitelist in `server.js`. |
+| **RSK-09** | **Clickjacking & Frame Hijacking**<br>Checkout page embedded inside malicious iframe to hijack clicks or credentials. | High | Medium | **P1** | `X-Frame-Options: DENY` and CSP `frame-ancestors 'none'` enforcement. |
+| **RSK-10** | **Prototype Pollution & State Tampering**<br>Injection of `__proto__` or non-catalog product keys to corrupt cart object. | High | Low | **P1** | Prototype-free dictionaries (`Object.create(null)`) and catalog ID whitelisting. |
 
 ---
 
@@ -50,6 +54,11 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 | `TC-09` | Optional email syntax validation when email address is provided | Edge Case Hardening | Automated (Playwright) | [PASS] |
 | `TC-10` | XSS script tags and HTML injection rendered safely as literal text | Security / Edge Case | Automated (Playwright) | [PASS] |
 | `TC-11` | Exact float-free financial calculations using cents-based arithmetic | Financial Edge Case | Automated (Playwright) | [PASS] |
+| `TC-12` | HTTP security response headers enforcement (CSP, X-Frame-Options, X-Content-Type-Options) | Enterprise Security | Automated (Playwright) | [PASS] |
+| `TC-13` | Directory traversal resistance and sensitive system files blocking | System Security | Automated (Playwright) | [PASS] |
+| `TC-14` | HTTP method restrictions (blocking non-GET methods with 405 Method Not Allowed) | Network Security | Automated (Playwright) | [PASS] |
+| `TC-15` | Prototype pollution defense and unauthorized catalog key injection prevention | Application Security | Automated (Playwright) | [PASS] |
+| `TC-16` | Cryptographically secure, unguessable order reference generation via Web Crypto API | Cryptographic Security | Automated (Playwright) | [PASS] |
 
 ---
 
@@ -117,7 +126,7 @@ The goal of this test plan is to establish end-to-end quality assurance for the 
 
 | Evaluation Criterion | Implementation Details | Verified By |
 | :--- | :--- | :--- |
-| **Clear Test Cases** | 11 descriptive, self-documenting test cases covering requirements and edge risks. | `tests/checkout.spec.js` |
+| **Clear Test Cases** | 16 descriptive, self-documenting test cases covering requirements, edge risks, and enterprise security. | `tests/checkout.spec.js` |
 | **Accurate Assertions** | Web-first assertions matching exact prices, currency formatting, regex references, and DOM element presence. | Playwright Test Engine |
 | **Reproducibility** | Standard npm project runnable with `npm test` or `npx playwright test`. Static server built-in. | CI / Local execution |
 | **Plain Interface** | Responsive, semantic HTML5/CSS3/Vanilla JS with zero external framework dependencies or heavy setup. | `index.html`, `src/style.css` |
