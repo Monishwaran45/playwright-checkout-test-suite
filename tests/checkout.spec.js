@@ -471,8 +471,8 @@ test.describe('Mini Checkout - Enterprise Security Hardening & Penetration Defen
    * Attempts to traverse out of root or access sensitive server/config files must be blocked.
    */
   test('Security Check 2: Prevents directory traversal and blocks sensitive system files', async ({ request }) => {
-    // Attempt 1: Accessing server.js directly
-    const resServer = await request.get('/server.js');
+    // Attempt 1: Accessing scripts/server.js directly
+    const resServer = await request.get('/scripts/server.js');
     expect(resServer.status()).toBe(403);
 
     // Attempt 2: Accessing package.json directly
@@ -480,7 +480,7 @@ test.describe('Mini Checkout - Enterprise Security Hardening & Penetration Defen
     expect(resPackage.status()).toBe(403);
 
     // Attempt 3: Traversal probe using URL encoding
-    const resTraversal = await request.get('/%2e%2e/%2e%2e/server.js');
+    const resTraversal = await request.get('/%2e%2e/%2e%2e/scripts/server.js');
     expect(resTraversal.status()).toBe(403);
   });
 

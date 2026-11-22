@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.resolve(__dirname);
+// Root directory of the repository (parent of scripts/)
+const PUBLIC_DIR = path.resolve(__dirname, '..');
 
 // Whitelisted static MIME types
 const MIME_TYPES = {
@@ -35,20 +36,11 @@ const BLOCKED_NAMES = new Set([
   'package-lock.json',
   'playwright.config.js',
   'README.md',
-  'TEST_PLAN.md'
+  'TEST_PLAN.md',
+  'vercel.json'
 ]);
 
-const BLOCKED_PREFIXES = ['.', 'tests', 'node_modules', 'playwright-report', 'test-results'];
-
-// Serverless asset tracing hint for bundlers (e.g. Vercel @vercel/nft)
-try {
-  fs.readFileSync(path.join(__dirname, 'index.html'));
-  fs.readFileSync(path.join(__dirname, 'src', 'style.css'));
-  fs.readFileSync(path.join(__dirname, 'src', 'app.js'));
-  fs.readFileSync(path.join(__dirname, 'favicon.svg'));
-} catch (e) {
-  // Silent fallback
-}
+const BLOCKED_PREFIXES = ['.', 'tests', 'node_modules', 'playwright-report', 'test-results', 'scripts'];
 
 const server = http.createServer((req, res) => {
   // 1. HTTP Method Restriction (Allow only GET and HEAD)

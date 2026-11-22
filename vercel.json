@@ -1,11 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": false,
-  "functions": {
-    "server.js": {
-      "includeFiles": "{src/**,index.html,favicon.svg}"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",

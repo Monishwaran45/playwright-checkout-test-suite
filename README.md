@@ -25,11 +25,13 @@ The project fulfills all requirements of the SDET Intern challenge:
 
 ```text
 ├── index.html               # Single-page checkout user interface
-├── server.js                # Built-in lightweight zero-dependency HTTP server
+├── vercel.json              # Vercel deployment configuration and security headers
 ├── package.json             # NPM dependencies and test execution scripts
 ├── playwright.config.js     # Playwright configuration (webServer, reporter, projects)
 ├── TEST_PLAN.md             # Formal Test Plan, Risk Matrix and Manual Test Logs
 ├── README.md                # Setup, run commands, architecture and evaluation guide
+├── scripts/
+│   └── server.js            # Built-in lightweight zero-dependency HTTP server
 ├── src/
 │   ├── app.js               # Application logic, cart state and double-click protection
 │   └── style.css            # Responsive, accessible modern stylesheet

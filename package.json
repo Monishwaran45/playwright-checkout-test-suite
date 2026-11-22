@@ -2,9 +2,9 @@
   "name": "quickstore-mini-checkout",
   "version": "1.0.0",
   "description": "Mini Checkout single-page application and automated browser test suite for Fynd Hiring Hackathon (SDET Intern Track)",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "build": "echo 'Static assets ready'",
+    "start": "node scripts/server.js",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
